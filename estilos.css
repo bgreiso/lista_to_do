@@ -1,0 +1,97 @@
+/* Estilos generales */
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    padding: 15px;
+}
+
+/* Contenedor del formulario */
+.form-signin {
+    width: 100%;
+    max-width: 330px;
+    padding: 2rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Logo */
+.login-logo {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    display: block;
+    color: #0d6efd;
+}
+
+/* Inputs */
+.form-signin .form-floating:focus-within {
+    z-index: 2;
+}
+
+.form-signin input[type="text"] {
+    margin-bottom: -1px;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.form-signin input[type="password"] {
+    margin-bottom: 15px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+/* Botón */
+.btn-login {
+    padding: 0.5rem;
+    font-weight: 600;
+}
+
+/* Enlaces */
+.login-links {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.login-links a {
+    color: #6c757d;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.login-links a:hover {
+    color: #0d6efd;
+}
+
+/* Mensajes de error */
+.login-alert {
+    border-radius: 5px;
+    margin-bottom: 1.5rem;
+}
+
+.navbar {
+padding-left: 0 !important;
+padding-right: 0 !important;
+}
+
+.container-fluid {
+padding-left: 15px;
+padding-right: 15px;
+}
+
+body {
+padding: 0 !important;
+margin: 0 !important;
+}
+
+.navbar > .container-fluid {
+max-width: 100%;
+}
