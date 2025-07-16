@@ -76,22 +76,3 @@ body {
     border-radius: 5px;
     margin-bottom: 1.5rem;
 }
-
-.navbar {
-padding-left: 0 !important;
-padding-right: 0 !important;
-}
-
-.container-fluid {
-padding-left: 15px;
-padding-right: 15px;
-}
-
-body {
-padding: 0 !important;
-margin: 0 !important;
-}
-
-.navbar > .container-fluid {
-max-width: 100%;
-}

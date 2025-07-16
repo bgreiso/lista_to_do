@@ -1,154 +1,243 @@
-<?php 
-include 'config.php';
-requerir_login();
+<?php
+require_once 'config.php';
 
-$id_usuario = 
-$_SESSION['id_usuario'];
+// Datos para widgets del dashboard
+$stats = [
+    'total_usuarios' => $conexion->query("SELECT COUNT(*) FROM usuarios")->fetch_row()[0],
+    'tareas_pendientes' => $conexion->query("SELECT COUNT(*) FROM tareas WHERE id_estatus = 1")->fetch_row()[0],
+    'tareas_completadas' => $conexion->query("SELECT COUNT(*) FROM tareas WHERE id_estatus = 3")->fetch_row()[0]
+];
 
-    $sql = "SELECT id, tarea, fecha_creacion, completada, fecha_completada
-        FROM tareas
-        WHERE id_usuario = ?
-        ORDER BY completada ASC, fecha_creacion DESC";
-
-$stmt = $conexion->prepare($sql);
-
-if (!$stmt) {
-    die("Error en la consulta: " . $conexion->error);
-}
-
-$stmt->bind_param("i", $id_usuario);
-
-if (!$stmt->execute()) {
-    die("Error al ejecutar: " . $stmt->error);
-}
-
-$resultado = $stmt->get_result();
+// Datos para gráficos (puedes personalizar)
+$usuarios_por_depto = $conexion->query("
+    SELECT d.nombre as departamento, COUNT(u.id_usuario) as total
+    FROM departamentos d
+    LEFT JOIN usuarios u ON d.id_departamento = u.id_departamento
+    GROUP BY d.id_departamento
+")->fetch_all(MYSQLI_ASSOC);
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Panel de Control</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="estilos.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-</head>
-<body class="d-flex flex-column min-vh-100">
-    <nav style="background-color: #0d6efd; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
-        <div>
-            <i class="bi bi-check2-circle me-2"></i>
-                <span>Gestor de Tareas</span>
-        </div>
-        <div>
-            <span style="margin-right: 15px;">
-                <i class="bi bi-person-circle me-1"></i> <?= htmlspecialchars($_SESSION['usuario']) ?>
-            </span>
-                <a href="cerrar_sesion.php" style="color: white; text-decoration: none; border: 1px solid white; padding: 5px 10px; border-radius: 4px;">
-                    <i class="bi bi-box-arrow-right me-1"></i> Salir
-                </a>
-        </div>
-    </nav>
+<?php include 'includes/header.php'; ?>
 
-    <!-- Contenido principal -->
-    <main class="container my-4 flex-grow-1">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <!-- Card para agregar tareas -->
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-body p-4">
-                        <form action="agregar_tarea.php" method="POST" class="row g-2">
-                            <div class="col-md-8">
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-pencil-square text-primary"></i></span>
-                                    <input type="text" name="nueva_tarea" class="form-control border-start-0" 
-                                           placeholder="Escribe una nueva tarea..." required>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <button type="submit" class="btn btn-primary w-100 h-100">
-                                    <i class="bi bi-plus-circle me-1"></i> Agregar
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+<!-- Contenido de la página -->
+<div class="container-fluid">
 
-                <!-- Card de lista de tareas -->
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white border-0 py-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                <i class="bi bi-list-task text-primary me-2"></i>
-                                Mis Tareas
-                            </h5>
-                            <span class="badge bg-primary rounded-pill">
-                            </span>
+    <!-- Encabezado -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Panel de Control</h1>
+        <a href="reportes/generar.php" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+            <i class="bi bi-download"></i> Generar Reporte
+        </a>
+    </div>
+
+    <!-- Widgets -->
+    <div class="row">
+        <!-- Total Usuarios -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Usuarios Registrados</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['total_usuarios'] ?></div>
                         </div>
-                    </div>
-                    
-                    <div class="card-body p-0">
-                        <?php if ($resultado->num_rows > 0): ?>
-                            <ul class="list-group list-group-flush">
-                                <?php while ($fila = $resultado->fetch_assoc()): ?>
-                                <li class="list-group-item <?= $fila['completada'] ? 'bg-light' : '' ?>">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div class="flex-grow-1 me-3">
-                                            <div class="d-flex align-items-center">
-                                                <?php if ($fila['completada']): ?>
-                                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
-                                                <?php else: ?>
-                                                    <i class="bi bi-circle text-muted me-2"></i>
-                                                <?php endif; ?>
-                                                
-                                                <span class="<?= $fila['completada'] ? 'text-decoration-line-through text-muted' : 'fw-medium' ?>">
-                                                    <?= htmlspecialchars($fila['tarea']) ?>
-                                                </span>
-                                            </div>
-                                            <small class="text-muted ms-4">
-                                                <i class="bi bi-clock me-1"></i>
-                                                <?= date('d/m/Y H:i', strtotime($fila['fecha_creacion'])) ?>
-                                                <?php if ($fila['completada'] && !empty($fila['fecha_completada'])): ?>
-|                                                   <i class="bi bi-check2-all me-1"></i>
-                                                    <?= date('d/m/Y', strtotime($fila['fecha_completada'])) ?>
-                                                <?php endif; ?>
-                                            </small>
-                                        </div>
-                                        
-                                        <div class="btn-group" role="group">
-                                            <?php if (!$fila['completada']): ?>
-                                                <a href="completar_tarea.php?id=<?= $fila['id'] ?>" 
-                                                   class="btn btn-sm btn-outline-success"
-                                                   data-bs-toggle="tooltip" title="Marcar como completada">
-                                                    <i class="bi bi-check2"></i>
-                                                </a>
-                                            <?php endif; ?>
-                                            <a href="eliminar_tarea.php?id=<?= $fila['id'] ?>" 
-                                               class="btn btn-sm btn-outline-danger"
-                                               data-bs-toggle="tooltip" title="Eliminar tarea">
-                                                <i class="bi bi-trash"></i>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </li>
-                                <?php endwhile; ?>
-                            </ul>
-                        <?php else: ?>
-                            <div class="text-center py-5">
-                                <i class="bi bi-check2-all display-5 text-muted mb-3"></i>
-                                <h5 class="text-muted">No hay tareas pendientes</h5>
-                                <p class="text-muted">¡Agrega tu primera tarea usando el formulario arriba!</p>
-                            </div>
-                        <?php endif; ?>
+                        <div class="col-auto">
+                            <i class="bi bi-people fa-2x text-gray-300"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
-    <footer class="bg-light mt-auto py-3 border-top">
-        <div class="container text-center text-muted small">
-            <div>Sistema de Tareas v1.0 &copy; <?= date('Y') ?></div>
+
+        <!-- Tareas Pendientes -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Tareas Pendientes</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['tareas_pendientes'] ?></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-list-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </footer>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+
+        <!-- Tareas Completadas -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Tareas Completadas</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['tareas_completadas'] ?></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Otro Widget -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Progreso Total</div>
+                            <div class="row no-gutters align-items-center">
+                                <div class="col-auto">
+                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">
+                                        <?php
+                                        $total_tareas = $stats['tareas_pendientes'] + $stats['tareas_completadas'];
+                                        $progreso = ($total_tareas > 0) ? round(($stats['tareas_completadas'] / $total_tareas) * 100) : 0;
+                                        echo $progreso . '%';
+                                        ?>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="progress progress-sm mr-2">
+                                        <div class="progress-bar bg-info" role="progressbar" 
+                                             style="width: <?= $progreso ?>%" 
+                                             aria-valuenow="<?= $progreso ?>" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-clipboard-data fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos y Tablas -->
+    <div class="row">
+        <!-- Gráfico de usuarios por departamento -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Distribución de Usuarios por Departamento</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar">
+                        <canvas id="usuariosDepartamentoChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Últimas tareas -->
+        <div class="col-xl-4 col-lg-5">
+            <?php include 'includes/ultimas_tareas.php'; ?>
+        </div>
+    </div>
+
+    <!-- Tabla de usuarios recientes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Usuarios Recientes</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Usuario</th>
+                                    <th>Departamento</th>
+                                    <th>Fecha Registro</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $usuarios = $conexion->query("
+                                    SELECT u.id_usuario, u.nombre, u.usuario, u.fecha_registro, d.nombre as departamento
+                                    FROM usuarios u
+                                    LEFT JOIN departamentos d ON u.id_departamento = d.id_departamento
+                                    ORDER BY u.fecha_registro DESC
+                                    LIMIT 5
+                                ");
+                                
+                                while ($usuario = $usuarios->fetch_assoc()):
+                                ?>
+                                <tr>
+                                    <td><?= $usuario['id_usuario'] ?></td>
+                                    <td><?= htmlspecialchars($usuario['nombre']) ?></td>
+                                    <td><?= htmlspecialchars($usuario['usuario']) ?></td>
+                                    <td><?= htmlspecialchars($usuario['departamento']) ?></td>
+                                    <td><?= date('d/m/Y', strtotime($usuario['fecha_registro'])) ?></td>
+                                    <td>
+                                        <a href="usuarios/editar.php?id=<?= $usuario['id_usuario'] ?>" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="usuarios/eliminar.php?id=<?= $usuario['id_usuario'] ?>" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Script para gráficos -->
+<script>
+// Gráfico de barras - Usuarios por departamento
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('usuariosDepartamentoChart').getContext('2d');
+    const departamentos = <?= json_encode(array_column($usuarios_por_depto, 'departamento')) ?>;
+    const totales = <?= json_encode(array_column($usuarios_por_depto, 'total')) ?>;
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: departamentos,
+            datasets: [{
+                label: 'Usuarios',
+                data: totales,
+                backgroundColor: '#4e73df',
+                hoverBackgroundColor: '#2e59d9',
+                borderColor: '#4e73df',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+
+<?php include 'includes/footer.php'; ?>
