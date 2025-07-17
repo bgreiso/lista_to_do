@@ -56,7 +56,7 @@
                         <a href="tareas/todas.php" class="nav-link text-white">
                             <i class="bi bi-list-ul"></i> Todas las Tareas
                         </a>
-                        <a href="agregar_tarea.php" class="nav-link text-white">
+                        <a href="tareas/agregar_tarea.php" class="nav-link text-white">
                             <i class="bi bi-plus-circle"></i> Crear Tarea
                         </a>
                     </div>

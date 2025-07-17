@@ -1,5 +1,6 @@
 <?php
 require_once 'config.php';
+include 'includes/header.php';
 
 // Datos para widgets del dashboard
 $stats = [
@@ -16,8 +17,6 @@ $usuarios_por_depto = $conexion->query("
     GROUP BY d.id_departamento
 ")->fetch_all(MYSQLI_ASSOC);
 ?>
-
-<?php include 'includes/header.php'; ?>
 
 <!-- Contenido de la página -->
 <div class="container-fluid">

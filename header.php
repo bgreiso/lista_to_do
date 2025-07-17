@@ -68,7 +68,7 @@
                             <i class="bi bi-person"></i> Perfil
                         </a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="cerrar_sesion.php" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                        <a class="dropdown-item" href="../cerrar_sesion.php" data-bs-toggle="modal" data-bs-target="#logoutModal">
                             <i class="bi bi-box-arrow-right"></i> Cerrar sesión
                         </a>
                     </div>

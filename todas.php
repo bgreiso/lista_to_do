@@ -112,50 +112,57 @@ $tareas = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 </form>
 
 <!-- Tabla de Tareas -->
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Título</th>
-            <th>Usuario</th>
-            <th>Departamento</th>
-            <th>Estatus</th>
-            <th>Fecha Creación</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php foreach($tareas as $tarea): ?>
-        <tr>
-            <td><?= $tarea['id_tarea'] ?></td>
-            <td><?= htmlspecialchars($tarea['titulo']) ?></td>
-            <td><?= htmlspecialchars($tarea['usuario']) ?></td>
-            <td><?= htmlspecialchars($tarea['departamento']) ?></td>
-            <td><span class="badge bg-<?= 
-                $tarea['estatus'] == 'Completado' ? 'success' : 
-                ($tarea['estatus'] == 'Pendiente' ? 'warning' : 'secondary') 
-            ?>"><?= $tarea['estatus'] ?></span></td>
-            <td><?= date('d/m/Y', strtotime($tarea['fecha_creacion'])) ?></td>
-            <td>
-                <a href="../tareas/detalle.php?id=<?= $tarea['id_tarea'] ?>" class="btn btn-sm btn-info" title="Ver Detalle">
-                    <i class="bi bi-eye"></i>
-                </a>
-                <?php if ($tarea['id_estatus'] == 1): ?>
-                    <form method="get" style="display:inline;">
-                        <input type="hidden" name="iniciar" value="<?= $tarea['id_tarea'] ?>">
-                        <input type="checkbox" onchange="this.form.submit()" title="Aceptar tarea"> Aceptar
-                    </form>
-                <?php endif; ?>
-                <?php if ($tarea['id_estatus'] == 2): ?>
-                    <form method="get" style="display:inline;">
-                        <input type="hidden" name="finalizar" value="<?= $tarea['id_tarea'] ?>">
-                        <input type="checkbox" onchange="this.form.submit()" title="Finalizar tarea"> Finalizar
-                    </form>
-                <?php endif; ?>
-            </td>
-        </tr>
-        <?php endforeach; ?>
-    </tbody>
-    </table>
-
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Todas las Tareas</h1>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Título</th>
+                        <th>Usuario</th>
+                        <th>Departamento</th>
+                        <th>Estatus</th>
+                        <th>Fecha Creación</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach($tareas as $tarea): ?>
+                    <tr>
+                        <td><?= $tarea['id_tarea'] ?></td>
+                        <td><?= htmlspecialchars($tarea['titulo']) ?></td>
+                        <td><?= htmlspecialchars($tarea['usuario']) ?></td>
+                        <td><?= htmlspecialchars($tarea['departamento']) ?></td>
+                        <td><span class="badge bg-<?= 
+                            $tarea['estatus'] == 'Completado' ? 'success' : 
+                            ($tarea['estatus'] == 'Pendiente' ? 'warning' : 'secondary') 
+                        ?>"><?= $tarea['estatus'] ?></span></td>
+                        <td><?= date('d/m/Y', strtotime($tarea['fecha_creacion'])) ?></td>
+                        <td>
+                            <a href="../tareas/detalle.php?id=<?= $tarea['id_tarea'] ?>" class="btn btn-sm btn-info" title="Ver Detalle">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <?php if ($tarea['id_estatus'] == 1): ?>
+                                <form method="get" style="display:inline;">
+                                    <input type="hidden" name="iniciar" value="<?= $tarea['id_tarea'] ?>">
+                                    <input type="checkbox" onchange="this.form.submit()" title="Aceptar tarea"> Aceptar
+                                </form>
+                            <?php endif; ?>
+                            <?php if ($tarea['id_estatus'] == 2): ?>
+                                <form method="get" style="display:inline;">
+                                    <input type="hidden" name="finalizar" value="<?= $tarea['id_tarea'] ?>">
+                                    <input type="checkbox" onchange="this.form.submit()" title="Finalizar tarea"> Finalizar
+                                </form>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>     
+    </div>   
+</div>
 <?php include '../includes/footer.php'; ?>
