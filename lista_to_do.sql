@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 16-07-2025 a las 05:09:32
+-- Tiempo de generación: 21-07-2025 a las 04:17:43
 -- Versión del servidor: 10.1.38-MariaDB
 -- Versión de PHP: 7.3.2
 
@@ -113,6 +113,15 @@ CREATE TABLE `estatus` (
   `nombre` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+--
+-- Volcado de datos para la tabla `estatus`
+--
+
+INSERT INTO `estatus` (`id_estatus`, `nombre`) VALUES
+(1, 'Pendiente'),
+(2, 'En curso'),
+(3, 'Finalizada');
+
 -- --------------------------------------------------------
 
 --
@@ -154,6 +163,7 @@ INSERT INTO `roles` (`id_rol`, `nombre`) VALUES
 CREATE TABLE `tareas` (
   `id_tarea` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
+  `id_usuario_asignado` int(11) NOT NULL,
   `titulo` varchar(255) NOT NULL,
   `descripcion` text,
   `herramientas` text,
@@ -162,6 +172,20 @@ CREATE TABLE `tareas` (
   `fecha_actualizacion` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `fecha_finalizacion` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Volcado de datos para la tabla `tareas`
+--
+
+INSERT INTO `tareas` (`id_tarea`, `id_usuario`, `id_usuario_asignado`, `titulo`, `descripcion`, `herramientas`, `id_estatus`, `fecha_creacion`, `fecha_actualizacion`, `fecha_finalizacion`) VALUES
+(2, 3, 13, 'Generar Reportes', 'abdjdanauwn', 'cbwbuwe2jier', 3, '2025-07-20 10:27:23', '2025-07-20 11:50:19', NULL),
+(3, 3, 4, 'Listar usuarios', 'brbhvfwnfq', 'hewhfjbfjdbwf', 3, '2025-07-20 11:01:12', '2025-07-20 20:29:38', '2025-07-20 20:29:38'),
+(4, 3, 10, 'Realizar informe pasantías', 'fbdbjnefd', 'ewuhfuwefnewjfw', 3, '2025-07-20 11:42:47', '2025-07-20 11:49:12', NULL),
+(5, 3, 3, 'Escuchar música', 'BFHWBFHIUH', 'DHWDUHQWUHWHFW', 2, '2025-07-20 11:51:55', '2025-07-20 20:28:14', NULL),
+(6, 3, 10, 'Rehacer login', 'haeuwhfiaw', 'hsyfuehfuewu', 2, '2025-07-20 11:52:34', '2025-07-20 11:52:54', NULL),
+(7, 3, 13, 'Bailar', 'hfunfiewjnfwjfewnj', 'fewhfuhewfuewhjfew', 1, '2025-07-20 20:28:33', NULL, NULL),
+(8, 3, 9, 'Cocinar', 'uhfnwjjnf', 'ffdwbfhewuhuruwr', 1, '2025-07-20 20:28:56', NULL, NULL),
+(9, 4, 4, 'Hola', 'hbdehbwfhwbf', 'nwdfhwuehfheufh', 1, '2025-07-20 21:44:09', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -174,6 +198,8 @@ CREATE TABLE `usuarios` (
   `nombre` varchar(100) NOT NULL,
   `usuario` varchar(50) NOT NULL,
   `contraseña` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `telefono` int(11) NOT NULL,
   `id_departamento` int(11) DEFAULT NULL,
   `id_cargo` int(11) DEFAULT NULL,
   `id_rol` int(11) DEFAULT NULL,
@@ -184,9 +210,14 @@ CREATE TABLE `usuarios` (
 -- Volcado de datos para la tabla `usuarios`
 --
 
-INSERT INTO `usuarios` (`id_usuario`, `nombre`, `usuario`, `contraseña`, `id_departamento`, `id_cargo`, `id_rol`, `fecha_registro`) VALUES
-(3, 'Greiso Briceño', 'bgreiso', '$2y$10$X91BmWZJtd6WMGY7aQQ52eO7FED/1FCvzYQ7xVh.LXafr4TPMaQha', 11, 33, 1, '2025-07-15 22:10:16'),
-(4, 'Maria Ruiz', 'testmari', '$2y$10$DoFrrUDy2whaWSwJrQBA9.5L6h7VFjMM2A9UDF4ISP5vYxOUlC2/K', 11, 33, 2, '2025-07-15 22:12:26');
+INSERT INTO `usuarios` (`id_usuario`, `nombre`, `usuario`, `contraseña`, `email`, `telefono`, `id_departamento`, `id_cargo`, `id_rol`, `fecha_registro`) VALUES
+(3, 'Greiso Briceño', 'bgreiso', '$2y$10$X91BmWZJtd6WMGY7aQQ52eO7FED/1FCvzYQ7xVh.LXafr4TPMaQha', 'BGREISO@GMAIL.COM', 2147483647, 11, 33, 1, '2025-07-15 22:10:16'),
+(4, 'Maria Ruiz', 'testmari', '$2y$10$DoFrrUDy2whaWSwJrQBA9.5L6h7VFjMM2A9UDF4ISP5vYxOUlC2/K', 'PLUSAMAR15@GMAIL.COM', 2147483647, 11, 33, 2, '2025-07-15 22:12:26'),
+(5, 'user', 'user', '$2y$10$WzKq0fWkxMu4NuIxkI/EZ.SKc8d2wzRhp6A6w3kDv8o1s1ysmvkhm', '', 0, 11, 33, 1, '2025-07-19 20:49:46'),
+(9, 'Jose Perez', 'Josepp', '30073550b', '', 0, 9, 26, 2, '2025-07-20 10:16:30'),
+(10, 'Rubí Mendoza', 'rmendoza', '30073550b', '', 0, 10, 28, 2, '2025-07-20 10:18:02'),
+(13, 'Ernesto Lopez', 'lopnesto', '30073550b', '', 0, 12, 35, 2, '2025-07-20 10:19:21'),
+(14, 'Ronald', 'Rviloria', '$2y$10$GClMWcEzaPHMoiHCHH/7peZTxxt5jxNO0srDGVKl80wVuD1uuZMCu', '', 0, 9, 24, 1, '2025-07-20 20:40:16');
 
 --
 -- Índices para tablas volcadas
@@ -245,7 +276,8 @@ ALTER TABLE `roles`
 ALTER TABLE `tareas`
   ADD PRIMARY KEY (`id_tarea`),
   ADD KEY `id_usuario` (`id_usuario`),
-  ADD KEY `id_estatus` (`id_estatus`);
+  ADD KEY `id_estatus` (`id_estatus`),
+  ADD KEY `tareas_ibfk_3` (`id_usuario_asignado`);
 
 --
 -- Indices de la tabla `usuarios`
@@ -289,7 +321,7 @@ ALTER TABLE `departamentos`
 -- AUTO_INCREMENT de la tabla `estatus`
 --
 ALTER TABLE `estatus`
-  MODIFY `id_estatus` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_estatus` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `plantillas`
@@ -307,13 +339,13 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT de la tabla `tareas`
 --
 ALTER TABLE `tareas`
-  MODIFY `id_tarea` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_tarea` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- Restricciones para tablas volcadas
@@ -344,7 +376,8 @@ ALTER TABLE `plantillas`
 --
 ALTER TABLE `tareas`
   ADD CONSTRAINT `tareas_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`),
-  ADD CONSTRAINT `tareas_ibfk_2` FOREIGN KEY (`id_estatus`) REFERENCES `estatus` (`id_estatus`);
+  ADD CONSTRAINT `tareas_ibfk_2` FOREIGN KEY (`id_estatus`) REFERENCES `estatus` (`id_estatus`),
+  ADD CONSTRAINT `tareas_ibfk_3` FOREIGN KEY (`id_usuario_asignado`) REFERENCES `usuarios` (`id_usuario`);
 
 --
 -- Filtros para la tabla `usuarios`

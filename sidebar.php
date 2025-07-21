@@ -27,6 +27,7 @@
                 Gestión
             </div>
             
+            <?php if (esAdmin()): ?>
             <li class="nav-item">
                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseUsuarios" aria-expanded="false">
                     <i class="bi bi-people"></i>
@@ -35,15 +36,16 @@
                 </a>
                 <div id="collapseUsuarios" class="collapse" data-bs-parent=".nav-items-container">
                     <div class="bg-dark py-2">
-                        <a href="usuarios/listar.php" class="nav-link text-white">
+                        <a href="listar.php" class="nav-link text-white">
                             <i class="bi bi-list-ul"></i> Listar Usuarios
                         </a>
-                        <a href="usuarios/crear.php" class="nav-link text-white">
+                        <a href="crear.php" class="nav-link text-white">
                             <i class="bi bi-person-plus"></i> Crear Usuario
                         </a>
                     </div>
                 </div>
             </li>
+            <?php endif; ?>
             
             <li class="nav-item">
                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseTareas" aria-expanded="false">
@@ -53,14 +55,24 @@
                 </a>
                 <div id="collapseTareas" class="collapse" data-bs-parent=".nav-items-container">
                     <div class="bg-dark py-2">
-                        <a href="tareas/todas.php" class="nav-link text-white">
-                            <i class="bi bi-list-ul"></i> Todas las Tareas
+                        <a href="tablero.php" class="nav-link text-white">
+                            <i class="bi bi-list-ul"></i> Tablero de Tareas
                         </a>
-                        <a href="tareas/agregar_tarea.php" class="nav-link text-white">
+                        <a href="todas.php" class="nav-link text-white">
+                            <i class="bi bi-list-ul"></i> Lista de Tareas
+                        </a>
+                        <a href="agregar_tarea.php" class="nav-link text-white">
                             <i class="bi bi-plus-circle"></i> Crear Tarea
                         </a>
                     </div>
                 </div>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="reportes.php">
+                    <i class="bi bi-people"></i>
+                    Reportes
+                </a>
             </li>
         </ul>
     </div>

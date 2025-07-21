@@ -1,6 +1,6 @@
 <?php
-require_once '../config.php';
-include '../includes/header.php';
+require_once 'config.php';
+include 'header.php';
 
 // Filtros
 $filtros = [
@@ -42,7 +42,7 @@ if ($query_deps) {
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
             <h6 class="m-0 font-weight-bold text-primary">Usuarios Registrados</h6>
-            <a href="usuarios/crear.php" class="btn btn-primary btn-sm">
+            <a href="crear.php" class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-circle"></i> Crear Usuario
             </a>
         </div>
@@ -85,7 +85,7 @@ if ($query_deps) {
                                 <td><?= htmlspecialchars($usuario['departamento']) ?></td>
                                 <td><?= htmlspecialchars($usuario['rol']) ?></td>
                                 <td>
-                                    <a href="usuarios/editar.php?id=<?= $usuario['id_usuario'] ?>" class="btn btn-warning btn-sm">
+                                    <a href="usuarios/editar.php?id=<?= $usuario['id_usuario'] ?>" class="btn btn-sm btn-primary">
                                         <i class="bi bi-pencil"></i> Editar
                                     </a>
                                     <a href="usuarios/eliminar.php?id=<?= $usuario['id_usuario'] ?>" class="btn btn-danger btn-sm">
@@ -100,4 +100,4 @@ if ($query_deps) {
         </div>
     </div>  
 </div>
-<?php include '../includes/footer.php'; ?>
+<?php include 'footer.php'; ?>

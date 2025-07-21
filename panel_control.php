@@ -1,6 +1,9 @@
 <?php
+require_once 'auth.php';
 require_once 'config.php';
-include 'includes/header.php';
+verificarAutenticacion();
+$usuario = obtenerUsuario();
+include 'header.php';
 
 // Datos para widgets del dashboard
 $stats = [
@@ -23,7 +26,7 @@ $usuarios_por_depto = $conexion->query("
 
     <!-- Encabezado -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Panel de Control</h1>
+        <h2>Bienvenido, <?php echo htmlspecialchars($_SESSION['nombre']); ?></h2>
         <a href="reportes/generar.php" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
             <i class="bi bi-download"></i> Generar Reporte
         </a>
@@ -141,7 +144,7 @@ $usuarios_por_depto = $conexion->query("
 
         <!-- Últimas tareas -->
         <div class="col-xl-4 col-lg-5">
-            <?php include 'includes/ultimas_tareas.php'; ?>
+            <?php include 'ultimas_tareas.php'; ?>
         </div>
     </div>
 
@@ -239,4 +242,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php include 'footer.php'; ?>

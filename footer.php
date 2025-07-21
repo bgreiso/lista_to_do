@@ -15,7 +15,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <a href="../cerrrar_sesion.php" class="btn btn-primary">Cerrar sesión</a>
+                <a href="cerrar_sesion.php" class="btn btn-primary">Cerrar sesión</a>
             </div>
         </div>
     </div>
@@ -29,7 +29,7 @@
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     
     <!-- Scripts personalizados -->
-    <script src="../assets/js/admin.js"></script>
+    <script src="admin.js"></script>
     
     <script>
     // Toggle del sidebar

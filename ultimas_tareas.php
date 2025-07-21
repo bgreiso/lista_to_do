@@ -6,8 +6,8 @@
                 <i class="bi bi-three-dots-vertical"></i>
             </a>
             <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in">
-                <a class="dropdown-item" href="tareas/todas.php">Ver todas</a>
-                <a class="dropdown-item" href="tareas/crear.php">Crear nueva</a>
+                <a class="dropdown-item" href="todas.php">Ver todas</a>
+                <a class="dropdown-item" href="agregar_tarea.php">Crear nueva</a>
             </div>
         </div>
     </div>
@@ -27,7 +27,7 @@
         if ($query && $query->num_rows > 0): ?>
             <div class="list-group">
                 <?php while ($tarea = $query->fetch_assoc()): ?>
-                    <a href="tareas/ver.php?id=<?= $tarea['id_tarea'] ?>" class="list-group-item list-group-item-action">
+                    <a href="ver.php?id=<?= $tarea['id_tarea'] ?>" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1"><?= htmlspecialchars($tarea['titulo']) ?></h6>
                             <small class="text-<?= 
