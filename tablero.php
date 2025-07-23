@@ -76,6 +76,30 @@ include 'header.php';
                         <div class="card-body" id="estado-<?= $estado['id_estatus'] ?>" data-estado-id="<?= $estado['id_estatus'] ?>">
                             <?php foreach ($tareas_por_estado[$estado['id_estatus']] as $tarea): ?>
                                 <div class="card task-card mb-3" data-task-id="<?= $tarea['id_tarea'] ?>" draggable="true">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                                        <small class="text-muted">
+                                            <?= date('d/m/Y', strtotime($tarea['fecha_creacion'])) ?>
+                                        </small>
+                                        <div class="task-actions">
+                                            <!-- Ícono para ver detalles -->
+                                            <a href="ver.php?id=<?= $tarea['id_tarea'] ?>" 
+                                               class="text-primary me-2" 
+                                               title="Ver detalles"
+                                               data-bs-toggle="tooltip">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </a>
+                                            <!-- Ícono para agregar comentario -->
+                                            <a href="#" 
+                                               class="text-success" 
+                                               title="Agregar comentario"
+                                               data-bs-toggle="modal" 
+                                               data-bs-target="#comentarioModal"
+                                               data-tarea-id="<?= $tarea['id_tarea'] ?>"
+                                               data-bs-toggle="tooltip">
+                                                <i class="bi bi-chat-left-text-fill"></i>
+                                            </a>
+                                        </div>
+                                    </div>
                                     <div class="card-body">
                                         <h5 class="card-title"><?= htmlspecialchars($tarea['titulo']) ?></h5>
                                         <p class="card-text"><?= htmlspecialchars(substr($tarea['descripcion'], 0, 100)) ?>...</p>
@@ -108,5 +132,52 @@ include 'header.php';
         </div>
     </div>
 </div>
+
+<!-- Modal para comentarios -->
+<div class="modal fade" id="comentarioModal" tabindex="-1" aria-labelledby="comentarioModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="comentarioModalLabel">Agregar Comentario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formComentario" method="post" action="comentarios.php">
+                    <input type="hidden" name="id_tarea" id="tareaComentarioId">
+                    <div class="mb-3">
+                        <label for="comentario" class="form-label">Comentario</label>
+                        <textarea class="form-control" id="comentario" name="comentario" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formComentario" class="btn btn-primary">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Inicializar tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    // Tooltips para los íconos
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Configurar modal de comentarios
+    const comentarioModal = document.getElementById('comentarioModal');
+    if (comentarioModal) {
+        comentarioModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const tareaId = button.getAttribute('data-tarea-id');
+            const modalInput = comentarioModal.querySelector('#tareaComentarioId');
+            modalInput.value = tareaId;
+        });
+    }
+});
+</script>
 
 <?php include 'footer.php'; ?>

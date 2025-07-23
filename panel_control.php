@@ -207,38 +207,85 @@ $usuarios_por_depto = $conexion->query("
 </div>
 
 <!-- Script para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Gráfico de barras - Usuarios por departamento
 document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('usuariosDepartamentoChart').getContext('2d');
+    // Verificar si el canvas existe
+    const ctx = document.getElementById('usuariosDepartamentoChart');
+    if (!ctx) {
+        console.error('No se encontró el elemento canvas para el gráfico');
+        return;
+    }
+
+    // Obtener datos desde PHP
     const departamentos = <?= json_encode(array_column($usuarios_por_depto, 'departamento')) ?>;
     const totales = <?= json_encode(array_column($usuarios_por_depto, 'total')) ?>;
     
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: departamentos,
-            datasets: [{
-                label: 'Usuarios',
-                data: totales,
-                backgroundColor: '#4e73df',
-                hoverBackgroundColor: '#2e59d9',
-                borderColor: '#4e73df',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
+    // Verificar que hay datos
+    if (departamentos.length === 0 || totales.length === 0) {
+        console.error('No hay datos para mostrar en el gráfico');
+        // Mostrar mensaje en lugar del gráfico
+        document.querySelector('.chart-bar').innerHTML = 
+            '<div class="alert alert-warning">No hay datos disponibles para mostrar el gráfico</div>';
+        return;
+    }
+    try {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: departamentos,
+                datasets: [{
+                    label: 'Usuarios por Departamento',
+                    data: totales,
+                    backgroundColor: [
+                        'rgba(78, 115, 223, 0.8)',
+                        'rgba(54, 185, 204, 0.8)',
+                        'rgba(255, 159, 64, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(78, 115, 223, 1)',
+                        'rgba(54, 185, 204, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                    },
+                    tooltip: {
+                        enabled: true,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0 // Para mostrar números enteros
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+    } catch (error) {
+        console.error('Error al crear el gráfico:', error);
+        document.querySelector('.chart-bar').innerHTML = 
+            '<div class="alert alert-danger">Error al cargar el gráfico</div>';
+    }
 });
 </script>
 

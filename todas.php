@@ -142,70 +142,83 @@ if ($result) {
         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
             <h6 class="m-0 font-weight-bold text-primary">Listado de Tareas</h6>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Título</th>
-                            <th>Creada por</th>
-                            <th>Asignada a</th>
-                            <th>Departamento</th>
-                            <th>Estatus</th>
-                            <th>Fecha Creación</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach($tareas as $tarea): ?>
-                        <tr>
-                            <td><?= $tarea['id_tarea'] ?></td>
-                            <td><?= htmlspecialchars($tarea['titulo']) ?></td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div>
-                                        <div><?= htmlspecialchars($tarea['creador_nombre']) ?></div>
-                                    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Creada por</th>
+                        <th>Asignada a</th>
+                        <th>Departamento</th>
+                        <th>Estatus</th>
+                        <th>Fecha Creación</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach($tareas as $tarea): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($tarea['titulo']) ?></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <div><?= htmlspecialchars($tarea['creador_nombre']) ?></div>
                                 </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div>
-                                        <div><?= htmlspecialchars($tarea['asignado_nombre']) ?></div>
-                                    </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <div><?= htmlspecialchars($tarea['asignado_nombre']) ?></div>
                                 </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-primary">
-                                    <?= htmlspecialchars($tarea['departamento_nombre']) ?>
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge bg-<?= 
-                                    $tarea['estatus'] == 'Completado' ? 'success' : 
-                                    ($tarea['estatus'] == 'Pendiente' ? 'warning' : 
-                                    ($tarea['estatus'] == 'En Progreso' ? 'info' : 'secondary')) 
-                                ?>">
-                                    <?= $tarea['estatus'] ?>
-                                </span>
-                            </td>
-                            <td><?= date('d/m/Y H:i', strtotime($tarea['fecha_creacion'])) ?></td>
-                            <td>
-                                <a href="editar_tarea.php?id=<?= $tarea['id_tarea'] ?>" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-pencil"></i>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">
+                                <?= htmlspecialchars($tarea['departamento_nombre']) ?>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-<?= 
+                                $tarea['estatus'] == 'Completado' ? 'success' : 
+                                ($tarea['estatus'] == 'Pendiente' ? 'warning' : 
+                                ($tarea['estatus'] == 'En Progreso' ? 'info' : 'secondary')) 
+                            ?>">
+                                <?= $tarea['estatus'] ?>
+                            </span>
+                        </td>
+                        <td><?= date('d/m/Y H:i', strtotime($tarea['fecha_creacion'])) ?></td>
+                        <td>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="editar_tarea.php?id=<?= $tarea['id_tarea'] ?>" 
+                                   class="btn btn-sm btn-primary p-2" 
+                                   title="Editar"
+                                   data-bs-toggle="tooltip">
+                                    <i class="bi bi-pencil-fill"></i>
                                 </a>
-                                <a href="eliminar_tarea.php?id=<?= $tarea['id_tarea'] ?>" class="btn btn-sm btn-danger">
-                                    <i class="bi bi-trash"></i>
+                                <a href="eliminar_tarea.php?id=<?= $tarea['id_tarea'] ?>" 
+                                   class="btn btn-sm btn-danger p-2" 
+                                   title="Eliminar"
+                                   data-bs-toggle="tooltip"
+                                   onclick="return confirm('¿Estás seguro de eliminar esta tarea?')">
+                                    <i class="bi bi-trash-fill"></i>
                                 </a>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+                                <a href="ver.php?id=<?= $tarea['id_tarea'] ?>" 
+                                   class="btn btn-sm btn-success p-2" 
+                                   title="Ver detalles"
+                                   data-bs-toggle="tooltip">
+                                    <i class="bi bi-eye-fill"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     </div>
+</div>
 </div>
 
 <?php include 'footer.php'; ?>

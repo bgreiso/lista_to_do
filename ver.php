@@ -2,168 +2,216 @@
 require_once 'config.php';
 require_once 'auth.php';
 
-$id_tarea = (int)$_GET['id_usuario'];
-$tarea = [];
-$campos_adicionales = [];
-
-// Obtener información básica de la tarea
-$stmt = $conexion->prepare("
-    SELECT t.*, u.nombre as asignado, e.nombre as estado, 
-           c.nombre as creador, d.nombre as departamento
-    FROM tareas t
-    JOIN usuarios u ON t.id_usuario_asignado = u.id_usuario
-    JOIN estatus e ON t.id_estatus = e.id_estatus
-    JOIN usuarios c ON t.id_usuario = c.id_usuario
-    LEFT JOIN departamentos d ON u.id_departamento = d.id_departamento
-    WHERE t.id_tarea = ?
-");
-$stmt->bind_param("i", $id_tarea);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows === 0) {
-    header('Location: todas.php');
-    exit;
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    header('Location: tablero.php');
+    exit();
 }
 
-$tarea = $result->fetch_assoc();
+$id_tarea = intval($_GET['id']);
 
-// Obtener campos adicionales
-$stmt_campos = $conexion->prepare("
-    SELECT ca.nombre, ca.tipo, tc.valor 
-    FROM tareas_campos tc
-    JOIN campos_adicionales ca ON tc.id_campo = ca.id_campo
-    WHERE tc.id_tarea = ?
+// Obtener información de la tarea
+$tarea = [];
+$query = $conexion->prepare("
+    SELECT t.*, u.nombre as asignado, e.nombre as estado, u_creador.nombre as creador
+    FROM tareas t
+    JOIN usuarios u ON t.id_usuario_asignado = u.id_usuario
+    JOIN usuarios u_creador ON t.id_usuario = u_creador.id_usuario
+    JOIN estatus e ON t.id_estatus = e.id_estatus
+    WHERE t.id_tarea = ?
 ");
-$stmt_campos->bind_param("i", $id_tarea);
-$stmt_campos->execute();
-$result_campos = $stmt_campos->get_result();
-$campos_adicionales = $result_campos->fetch_all(MYSQLI_ASSOC);
+$query->bind_param("i", $id_tarea);
+$query->execute();
+$resultado = $query->get_result();
+
+if ($resultado->num_rows === 0) {
+    header('Location: tablero.php');
+    exit();
+}
+
+$tarea = $resultado->fetch_assoc();
+
+
+// Obtener comentarios
+$comentarios = [];
+$query_comentarios = $conexion->prepare("
+    SELECT c.*, u.nombre as usuario, u.id_usuario as id_usuario_comentario
+    FROM comentarios c
+    JOIN usuarios u ON c.id_usuario = u.id_usuario
+    WHERE c.id_tarea = ?
+    ORDER BY c.fecha_creacion DESC
+");
+$query_comentarios->bind_param("i", $id_tarea);
+$query_comentarios->execute();
+$resultado_comentarios = $query_comentarios->get_result();
+$comentarios = $resultado_comentarios->fetch_all(MYSQLI_ASSOC);
 
 include 'header.php';
 ?>
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Detalle de Tarea #<?= $tarea['id_tarea'] ?></h1>
-        <div>
-            <a href="editar.php?id=<?= $tarea['id_tarea'] ?>" class="btn btn-warning">
-                <i class="bi bi-pencil"></i> Editar
-            </a>
-            <a href="tablero.php" class="btn btn-outline-secondary">
-                <i class="bi bi-kanban"></i> Volver al tablero
-            </a>
-        </div>
+        <h3><i class="bi bi-card-checklist"></i> Detalles de la Tarea</h3>
+        <a href="tablero.php" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver al Tablero
+        </a>
     </div>
-    
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 bg-primary text-white">
-            <h6 class="m-0 font-weight-bold">Información General</h6>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-8">
-                    <h4 class="text-primary"><?= htmlspecialchars($tarea['titulo']) ?></h4>
-                    <div class="mb-4">
-                        <p class="lead"><?= nl2br(htmlspecialchars($tarea['descripcion'])) ?></p>
-                    </div>
-                    
-                    <h5><i class="bi bi-tools"></i> Herramientas/Recursos</h5>
-                    <p><?= nl2br(htmlspecialchars($tarea['herramientas'])) ?></p>
-                </div>
-                <div class="col-md-4 border-start">
-                    <div class="mb-3">
-                        <strong>Estado:</strong>
-                        <span class="badge bg-<?= 
-                            $tarea['estado'] == 'Pendiente' ? 'warning' : 
-                            ($tarea['estado'] == 'En progreso' ? 'primary' : 'success') 
-                        ?> p-2">
-                            <i class="bi bi-circle-fill"></i> <?= $tarea['estado'] ?>
-                        </span>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong><i class="bi bi-person-check"></i> Asignado a:</strong>
-                        <p><?= htmlspecialchars($tarea['asignado']) ?></p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong><i class="bi bi-building"></i> Departamento:</strong>
-                        <p><?= htmlspecialchars($tarea['departamento'] ?? 'N/A') ?></p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong><i class="bi bi-person-plus"></i> Creada por:</strong>
-                        <p><?= htmlspecialchars($tarea['creador']) ?></p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong><i class="bi bi-calendar-plus"></i> Fecha creación:</strong>
-                        <p><?= date('d/m/Y H:i', strtotime($tarea['fecha_creacion'])) ?></p>
-                    </div>
-                    
-                    <?php if ($tarea['fecha_actualizacion']): ?>
-                    <div class="mb-3">
-                        <strong><i class="bi bi-calendar-check"></i> Última actualización:</strong>
-                        <p><?= date('d/m/Y H:i', strtotime($tarea['fecha_actualizacion'])) ?></p>
-                    </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <?php if (!empty($campos_adicionales)): ?>
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 bg-secondary text-white">
-            <h6 class="m-0 font-weight-bold">Campos Adicionales</h6>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <?php foreach ($campos_adicionales as $campo): ?>
-                    <div class="col-md-6 mb-3">
-                        <strong><?= htmlspecialchars($campo['nombre']) ?>:</strong>
-                        <p class="border p-2 rounded bg-light">
-                            <?php if ($campo['tipo'] === 'booleano'): ?>
-                                <span class="badge bg-<?= $campo['valor'] ? 'success' : 'danger' ?>">
-                                    <?= $campo['valor'] ? 'Sí' : 'No' ?>
-                                </span>
-                            <?php else: ?>
-                                <?= htmlspecialchars($campo['valor']) ?>
-                            <?php endif; ?>
-                        </p>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </div>
+
+    <?php if (isset($_SESSION['mensaje_exito'])): ?>
+        <div class="alert alert-success"><?= $_SESSION['mensaje_exito']; unset($_SESSION['mensaje_exito']); ?></div>
     <?php endif; ?>
     
-    <!-- Sección de historial de cambios -->
-    <div class="card shadow">
-        <div class="card-header py-3 bg-info text-white">
-            <h6 class="m-0 font-weight-bold"><i class="bi bi-clock-history"></i> Historial de Cambios</h6>
+    <?php if (isset($_SESSION['mensaje_error'])): ?>
+        <div class="alert alert-danger"><?= $_SESSION['mensaje_error']; unset($_SESSION['mensaje_error']); ?></div>
+    <?php endif; ?>
+
+    <!-- Tarjeta de detalles de la tarea -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><?= htmlspecialchars($tarea['titulo']) ?></h4>
         </div>
         <div class="card-body">
-            <ul class="list-group">
-                <li class="list-group-item">
-                    <div class="d-flex justify-content-between">
-                        <span>Tarea creada</span>
-                        <small><?= date('d/m/Y H:i', strtotime($tarea['fecha_creacion'])) ?></small>
-                    </div>
-                </li>
-                <?php if ($tarea['fecha_actualizacion']): ?>
-                <li class="list-group-item">
-                    <div class="d-flex justify-content-between">
-                        <span>Última actualización</span>
-                        <small><?= date('d/m/Y H:i', strtotime($tarea['fecha_actualizacion'])) ?></small>
-                    </div>
-                </li>
-                <?php endif; ?>
-                <!-- Aquí podrías agregar más elementos de historial -->
-            </ul>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-info-circle"></i> Información Básica</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong><i class="bi bi-person"></i> Creada por:</strong> 
+                            <?= htmlspecialchars($tarea['creador']) ?>
+                        </li>
+                        <li class="list-group-item">
+                            <strong><i class="bi bi-person-check"></i> Asignada a:</strong> 
+                            <?= htmlspecialchars($tarea['asignado']) ?>
+                        </li>
+                        <li class="list-group-item">
+                            <strong><i class="bi bi-calendar"></i> Fecha creación:</strong> 
+                            <?= date('d/m/Y H:i', strtotime($tarea['fecha_creacion'])) ?>
+                        </li>
+                        <?php if ($tarea['fecha_finalizacion']): ?>
+                        <li class="list-group-item">
+                            <strong><i class="bi bi-calendar-check"></i> Fecha finalización:</strong> 
+                            <?= date('d/m/Y H:i', strtotime($tarea['fecha_finalizacion'])) ?>
+                        </li>
+                        <?php endif; ?>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="bi bi-tags"></i> Estado y Prioridad</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong><i class="bi bi-list-check"></i> Estado:</strong> 
+                            <span class="badge bg-<?= 
+                                $tarea['id_estatus'] == 3 ? 'success' : 
+                                ($tarea['id_estatus'] == 2 ? 'warning' : 'info') 
+                            ?>">
+                                <?= htmlspecialchars($tarea['estado']) ?>
+                            </span>
+                        </li>
+                        <li class="list-group-item">
+                            <strong><i class="bi bi-exclamation-triangle"></i> Prioridad:</strong> 
+                            <span class="badge bg-<?= 
+                                $tarea['prioridad'] == 'alta' ? 'danger' : 
+                                ($tarea['prioridad'] == 'media' ? 'warning' : 'secondary') 
+                            ?>">
+                                <?= ucfirst($tarea['prioridad'] ?? 'normal') ?>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <h5><i class="bi bi-card-text"></i> Descripción</h5>
+                <div class="p-3 bg-light rounded">
+                    <?= nl2br(htmlspecialchars($tarea['descripcion'])) ?>
+                </div>
+            </div>
+            
+            <?php if (!empty($tarea['herramientas'])): ?>
+            <div class="mb-4">
+                <h5><i class="bi bi-tools"></i> Herramientas/Recursos</h5>
+                <div class="p-3 bg-light rounded">
+                    <?= nl2br(htmlspecialchars($tarea['herramientas'])) ?>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Sección de comentarios -->
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-chat-left-text"></i> Comentarios</h5>
+            <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#comentarioModal">
+                <i class="bi bi-plus"></i> Nuevo Comentario
+            </button>
+        </div>
+        <div class="card-body">
+            <?php if (empty($comentarios)): ?>
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-chat-square-text" style="font-size: 2rem;"></i>
+                    <p class="mt-2">No hay comentarios aún</p>
+                </div>
+            <?php else: ?>
+                <div class="timeline">
+                    <?php foreach ($comentarios as $comentario): ?>
+                        <div class="timeline-item mb-4">
+                            <div class="timeline-header d-flex justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar bg-<?= $comentario['id_usuario_comentario'] == $_SESSION['id_usuario'] ? 'primary' : 'secondary' ?> 
+                                        text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                        style="width: 40px; height: 40px;">
+                                        <?= strtoupper(substr($comentario['usuario'], 0, 1)) ?>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h6 class="mb-0"><?= htmlspecialchars($comentario['usuario']) ?></h6>
+                                        <small class="text-muted">
+                                            <?= date('d/m/Y H:i', strtotime($comentario['fecha_creacion'])) ?>
+                                        </small>
+                                    </div>
+                                </div>
+                                <?php if ($comentario['id_usuario'] == $_SESSION['id_usuario'] || esAdmin()): ?>
+                                    <a href="eliminar_comentario.php?id=<?= $comentario['id_comentario'] ?>&id_tarea=<?= $id_tarea ?>" 
+                                       class="text-danger" 
+                                       onclick="return confirm('¿Estás seguro de eliminar este comentario?')">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                            <div class="timeline-body mt-2 p-3 bg-light rounded">
+                                <?= nl2br(htmlspecialchars($comentario['comentario'])) ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
+
+<!-- Modal para nuevo comentario -->
+<div class="modal fade" id="comentarioModal" tabindex="-1" aria-labelledby="comentarioModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="comentarioModalLabel">Nuevo Comentario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="comentarios.php">
+                <div class="modal-body">
+                    <input type="hidden" name="id_tarea" value="<?= $id_tarea ?>">
+                    <div class="mb-3">
+                        <label for="comentario" class="form-label">Escribe tu comentario</label>
+                        <textarea class="form-control" id="comentario" name="comentario" rows="4" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Comentario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 
 <?php include 'footer.php'; ?>

@@ -113,6 +113,7 @@ body {
 .task-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    
 }
 
 .task-card.dragging {
@@ -228,3 +229,45 @@ body {
 .sidebarToggleTop:hover {
     color: #b7b9cc;
 }
+
+    /* Estilos para la línea de tiempo de comentarios */
+    .timeline {
+        position: relative;
+        padding-left: 20px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 10px;
+        width: 2px;
+        background-color: #dee2e6;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #0d6efd;
+        border: 2px solid #fff;
+        z-index: 1;
+    }
+    
+    .avatar {
+        font-weight: bold;
+    }
+    
+    .timeline-body {
+        margin-left: 55px;
+    }
