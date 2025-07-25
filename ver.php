@@ -30,6 +30,17 @@ if ($resultado->num_rows === 0) {
 
 $tarea = $resultado->fetch_assoc();
 
+// Obtener campos adicionales
+$campos_adicionales = [];
+$query_campos = $conexion->prepare("
+    SELECT * FROM campos_adicionales 
+    WHERE id_tarea = ?
+    ORDER BY id_campo ASC
+");
+$query_campos->bind_param("i", $id_tarea);
+$query_campos->execute();
+$resultado_campos = $query_campos->get_result();
+$campos_adicionales = $resultado_campos->fetch_all(MYSQLI_ASSOC);
 
 // Obtener comentarios
 $comentarios = [];
@@ -83,6 +94,10 @@ include 'header.php';
                             <?= htmlspecialchars($tarea['asignado']) ?>
                         </li>
                         <li class="list-group-item">
+                            <strong><i class="bi bi-card-text"></i> Categoría:</strong> 
+                            <?= htmlspecialchars($tarea['categoria']) ?>
+                        </li>
+                        <li class="list-group-item">
                             <strong><i class="bi bi-calendar"></i> Fecha creación:</strong> 
                             <?= date('d/m/Y H:i', strtotime($tarea['fecha_creacion'])) ?>
                         </li>
@@ -131,6 +146,27 @@ include 'header.php';
                 <h5><i class="bi bi-tools"></i> Herramientas/Recursos</h5>
                 <div class="p-3 bg-light rounded">
                     <?= nl2br(htmlspecialchars($tarea['herramientas'])) ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Sección de campos adicionales -->
+            <?php if (!empty($campos_adicionales)): ?>
+            <div class="mb-4">
+                <h5><i class="bi bi-list-check"></i> Campos Adicionales</h5>
+                <div class="row">
+                    <?php foreach ($campos_adicionales as $campo): ?>
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <strong><?= htmlspecialchars($campo['nombre']) ?></strong>
+                            </div>
+                            <div class="card-body">
+                                <?= nl2br(htmlspecialchars($campo['valor'])) ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
             <?php endif; ?>
@@ -212,6 +248,5 @@ include 'header.php';
         </div>
     </div>
 </div>
-
 
 <?php include 'footer.php'; ?>

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 21-07-2025 a las 04:17:43
+-- Tiempo de generación: 25-07-2025 a las 04:12:31
 -- Versión del servidor: 10.1.38-MariaDB
 -- Versión de PHP: 7.3.2
 
@@ -33,8 +33,24 @@ CREATE TABLE `campos_adicionales` (
   `id_tarea` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
-  `descripcion` text
+  `valor` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Volcado de datos para la tabla `campos_adicionales`
+--
+
+INSERT INTO `campos_adicionales` (`id_campo`, `id_tarea`, `id_usuario`, `nombre`, `valor`) VALUES
+(1, 14, 3, 'Objetivo', 'Calcular el área de diferentes figuras geométricas.'),
+(2, 14, 3, 'Funcionalidad', 'Permitir al usuario seleccionar una figura y proporcionar los datos necesarios para el cálculo.'),
+(3, 14, 3, 'Resultado', 'Mostrar el área calculada de la figura seleccionada.'),
+(4, 15, 3, 'Frontend', 'React, Vue.js, Angular (con HTML, CSS, JavaScript)'),
+(5, 15, 3, 'Backend', 'Node.js (Express), Python (Django/Flask), PHP (Laravel)'),
+(6, 15, 3, 'Base de datos', 'MongoDB, PostgreSQL, MySQL'),
+(7, 16, 3, 'Objetivo', 'Crear una plataforma digital para que individuos compartan sus ideas, conocimientos o experiencias con una audiencia global, estableciendo una presencia online profesional o personal.'),
+(8, 16, 3, 'Funcionalidad clave', 'Publicación de Artículos: Crear, editar y eliminar entradas de blog con contenido de texto e imágenes.  Navegación: Secciones para el blog principal, \"Acerca de Mí\" y \"Contacto\".  Responsividad: Adaptación del diseño a diferentes tamaños de pantalla (móviles, tabletas, escritorio).'),
+(9, 16, 3, 'Experiencia de usuario', 'La legibilidad del texto, la velocidad de carga y la facilidad para encontrar contenido son vitales.'),
+(10, 16, 3, 'Público objetivo', 'Blogueros individuales, escritores, expertos en un nicho específico que desean compartir contenido, o profesionales que buscan construir una marca personal online.');
 
 -- --------------------------------------------------------
 
@@ -80,6 +96,15 @@ CREATE TABLE `comentarios` (
   `id_usuario` int(11) NOT NULL,
   `fecha_creacion` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+--
+-- Volcado de datos para la tabla `comentarios`
+--
+
+INSERT INTO `comentarios` (`id_comentario`, `comentario`, `id_tarea`, `id_usuario`, `fecha_creacion`) VALUES
+(1, 'Me gusta', 7, 3, '2025-07-22 19:41:21'),
+(2, 'Sigue asi', 7, 3, '2025-07-22 19:44:17'),
+(3, 'HBBDHYFY', 9, 3, '2025-07-24 19:02:52');
 
 -- --------------------------------------------------------
 
@@ -165,27 +190,24 @@ CREATE TABLE `tareas` (
   `id_usuario` int(11) NOT NULL,
   `id_usuario_asignado` int(11) NOT NULL,
   `titulo` varchar(255) NOT NULL,
+  `categoria` text NOT NULL,
   `descripcion` text,
   `herramientas` text,
   `id_estatus` int(11) NOT NULL,
   `fecha_creacion` datetime DEFAULT CURRENT_TIMESTAMP,
   `fecha_actualizacion` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  `fecha_finalizacion` datetime DEFAULT NULL
+  `fecha_finalizacion` datetime DEFAULT NULL,
+  `prioridad` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- Volcado de datos para la tabla `tareas`
 --
 
-INSERT INTO `tareas` (`id_tarea`, `id_usuario`, `id_usuario_asignado`, `titulo`, `descripcion`, `herramientas`, `id_estatus`, `fecha_creacion`, `fecha_actualizacion`, `fecha_finalizacion`) VALUES
-(2, 3, 13, 'Generar Reportes', 'abdjdanauwn', 'cbwbuwe2jier', 3, '2025-07-20 10:27:23', '2025-07-20 11:50:19', NULL),
-(3, 3, 4, 'Listar usuarios', 'brbhvfwnfq', 'hewhfjbfjdbwf', 3, '2025-07-20 11:01:12', '2025-07-20 20:29:38', '2025-07-20 20:29:38'),
-(4, 3, 10, 'Realizar informe pasantías', 'fbdbjnefd', 'ewuhfuwefnewjfw', 3, '2025-07-20 11:42:47', '2025-07-20 11:49:12', NULL),
-(5, 3, 3, 'Escuchar música', 'BFHWBFHIUH', 'DHWDUHQWUHWHFW', 2, '2025-07-20 11:51:55', '2025-07-20 20:28:14', NULL),
-(6, 3, 10, 'Rehacer login', 'haeuwhfiaw', 'hsyfuehfuewu', 2, '2025-07-20 11:52:34', '2025-07-20 11:52:54', NULL),
-(7, 3, 13, 'Bailar', 'hfunfiewjnfwjfewnj', 'fewhfuhewfuewhjfew', 1, '2025-07-20 20:28:33', NULL, NULL),
-(8, 3, 9, 'Cocinar', 'uhfnwjjnf', 'ffdwbfhewuhuruwr', 1, '2025-07-20 20:28:56', NULL, NULL),
-(9, 4, 4, 'Hola', 'hbdehbwfhwbf', 'nwdfhwuehfheufh', 1, '2025-07-20 21:44:09', NULL, NULL);
+INSERT INTO `tareas` (`id_tarea`, `id_usuario`, `id_usuario_asignado`, `titulo`, `categoria`, `descripcion`, `herramientas`, `id_estatus`, `fecha_creacion`, `fecha_actualizacion`, `fecha_finalizacion`, `prioridad`) VALUES
+(14, 3, 4, 'Calculadora de Área de Figuras Geométricas', 'Backend', 'El objetivo de esta tarea es crear una calculadora que pueda calcular el área de diferentes figuras geométricas. El programa solicitará al usuario que elija una figura geométrica (círculo, cuadrado, rectángulo, triángulo) y luego solicitará las dimensiones necesarias para calcular el área. Finalmente, mostrará el resultado del cálculo.', 'Lenguaje de programación: Python (u otro lenguaje de tu elección).\r\nEditor de código: Visual Studio Code, Sublime Text, PyCharm, etc.\r\nLibrerías (opcional): math para cálculos matemáticos.', 1, '2025-07-24 21:13:09', NULL, NULL, ''),
+(15, 3, 3, 'Aplicación de lista de tareas pendientes', 'Desarrollo Web', 'Los usuarios deben poder agregar, editar, eliminar y marcar tareas como completadas.\r\nImplementar autenticación de usuarios y la posibilidad de asignar fechas límite a las tareas.', 'Laptop', 2, '2025-07-24 21:37:43', '2025-07-24 21:41:55', NULL, ''),
+(16, 3, 3, 'Blog Personal Responsivo', 'Desarrollo Web', 'Este proyecto implica construir un sitio web dinámico donde el creador pueda publicar artículos de forma regular. El blog debe ser visualmente atractivo y fácil de navegar. La responsividad es fundamental para asegurar que los visitantes tengan una buena experiencia sin importar el dispositivo que usen. Un sistema de comentarios permite la interacción con la audiencia.', 'Frontend: Next.js (framework de React para renderizado del lado del servidor y generación de sitios estáticos), CSS Modules o Styled Components (para estilos encapsulados).\r\nBackend: Strapi (CMS Headless para gestionar el contenido del blog a través de una API).\r\nBase de Datos: PostgreSQL (para la gestión de contenido estructurado de Strapi).\r\nDespliegue: Vercel (para Next.js) o Netlify (para sitios estáticos).', 1, '2025-07-24 21:41:00', NULL, NULL, '');
 
 -- --------------------------------------------------------
 
@@ -213,11 +235,11 @@ CREATE TABLE `usuarios` (
 INSERT INTO `usuarios` (`id_usuario`, `nombre`, `usuario`, `contraseña`, `email`, `telefono`, `id_departamento`, `id_cargo`, `id_rol`, `fecha_registro`) VALUES
 (3, 'Greiso Briceño', 'bgreiso', '$2y$10$X91BmWZJtd6WMGY7aQQ52eO7FED/1FCvzYQ7xVh.LXafr4TPMaQha', 'BGREISO@GMAIL.COM', 2147483647, 11, 33, 1, '2025-07-15 22:10:16'),
 (4, 'Maria Ruiz', 'testmari', '$2y$10$DoFrrUDy2whaWSwJrQBA9.5L6h7VFjMM2A9UDF4ISP5vYxOUlC2/K', 'PLUSAMAR15@GMAIL.COM', 2147483647, 11, 33, 2, '2025-07-15 22:12:26'),
-(5, 'user', 'user', '$2y$10$WzKq0fWkxMu4NuIxkI/EZ.SKc8d2wzRhp6A6w3kDv8o1s1ysmvkhm', '', 0, 11, 33, 1, '2025-07-19 20:49:46'),
-(9, 'Jose Perez', 'Josepp', '30073550b', '', 0, 9, 26, 2, '2025-07-20 10:16:30'),
-(10, 'Rubí Mendoza', 'rmendoza', '30073550b', '', 0, 10, 28, 2, '2025-07-20 10:18:02'),
-(13, 'Ernesto Lopez', 'lopnesto', '30073550b', '', 0, 12, 35, 2, '2025-07-20 10:19:21'),
-(14, 'Ronald', 'Rviloria', '$2y$10$GClMWcEzaPHMoiHCHH/7peZTxxt5jxNO0srDGVKl80wVuD1uuZMCu', '', 0, 9, 24, 1, '2025-07-20 20:40:16');
+(5, 'user', 'user', '$2y$10$WzKq0fWkxMu4NuIxkI/EZ.SKc8d2wzRhp6A6w3kDv8o1s1ysmvkhm', '', 0, 11, 33, 2, '2025-07-19 20:49:46'),
+(14, 'Ronald', 'Rviloria', '$2y$10$GClMWcEzaPHMoiHCHH/7peZTxxt5jxNO0srDGVKl80wVuD1uuZMCu', '', 0, 9, 24, 2, '2025-07-20 20:40:16'),
+(15, 'Julio', 'juliom', '$2y$10$Uvdi4849YiICXAc/6LOVCuPmAEnfmn5GYDLOtXYB7YVWrfauSuZhq', '', 0, 10, 29, 2, '2025-07-22 18:51:12'),
+(16, 'Pedro', 'Pedrop', '$2y$10$0BNcZh6RQTvdjCqGuB4lDuhWsKlCxHVrSkD9.Wl/uqhV1myldKoq6', '', 0, 12, 35, 2, '2025-07-24 20:28:36'),
+(17, 'Julieta', 'Julietap', '$2y$10$d55ijB1.OS6Ur/mrI5GivuJIIfPzsy6IQ4UVUYy6fWQVENuNfM12G', '', 0, 10, 29, 1, '2025-07-24 20:29:12');
 
 --
 -- Índices para tablas volcadas
@@ -297,7 +319,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `campos_adicionales`
 --
 ALTER TABLE `campos_adicionales`
-  MODIFY `id_campo` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_campo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `cargos`
@@ -309,7 +331,7 @@ ALTER TABLE `cargos`
 -- AUTO_INCREMENT de la tabla `comentarios`
 --
 ALTER TABLE `comentarios`
-  MODIFY `id_comentario` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_comentario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `departamentos`
@@ -339,13 +361,13 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT de la tabla `tareas`
 --
 ALTER TABLE `tareas`
-  MODIFY `id_tarea` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_tarea` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- Restricciones para tablas volcadas

@@ -5,17 +5,10 @@ require_once 'config.php';
 // Verificar rol y cargar usuarios si es admin
 $usuarios = [];
 if (esAdmin()) {
-    $query = $conexion->query("SELECT id_usuario, nombre FROM usuarios WHERE id_rol = 2 ORDER BY nombre"); // Solo usuarios normales
+    $query = $conexion->query("SELECT id_usuario, nombre FROM usuarios WHERE id_rol = 2 ORDER BY nombre");
     if ($query) {
         $usuarios = $query->fetch_all(MYSQLI_ASSOC);
     }
-}
-
-// Obtener campos adicionales disponibles
-$campos_adicionales = [];
-$query_campos = $conexion->query("SELECT id_campo, nombre, tipo FROM campos_adicionales");
-if ($query_campos) {
-    $campos_adicionales = $query_campos->fetch_all(MYSQLI_ASSOC);
 }
 
 $mensaje = '';
@@ -23,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $titulo = trim($_POST['titulo'] ?? '');
     $descripcion = trim($_POST['descripcion'] ?? '');
     $herramientas = trim($_POST['herramientas'] ?? '');
+    $categoria = trim($_POST['categoria'] ?? '');
     $id_estatus = 1; // Por defecto, pendiente
     
     // Determinar a quién se asigna la tarea
@@ -41,9 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conexion->begin_transaction();
             
             // Insertar la tarea principal
-            $stmt = $conexion->prepare("INSERT INTO tareas (titulo, descripcion, herramientas, id_usuario, id_usuario_asignado, id_estatus, fecha_creacion) 
-                                      VALUES (?, ?, ?, ?, ?, ?, NOW())");
-            $stmt->bind_param("sssiii", $titulo, $descripcion, $herramientas, $_SESSION['id_usuario'], $id_usuario_asignado, $id_estatus);
+            $stmt = $conexion->prepare("INSERT INTO tareas (titulo, descripcion, herramientas, categoria, id_usuario, id_usuario_asignado, id_estatus, fecha_creacion) 
+                                      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+            
+            if (!$stmt) {
+                throw new Exception("Error al preparar la consulta: " . $conexion->error);
+            }
+            
+            $stmt->bind_param("ssssiii", $titulo, $descripcion, $herramientas, $categoria, $_SESSION['id_usuario'], $id_usuario_asignado, $id_estatus);
             
             if (!$stmt->execute()) {
                 throw new Exception("Error al insertar tarea: " . $stmt->error);
@@ -51,12 +50,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $id_tarea = $conexion->insert_id;
             
-            // Procesar campos adicionales
+            // Procesar campos adicionales (opcionales)
             if (!empty($_POST['campos_adicionales'])) {
-                foreach ($_POST['campos_adicionales'] as $id_campo => $valor) {
-                    if (!empty($valor)) {
-                        $stmt_campo = $conexion->prepare("INSERT INTO tareas_campos (id_tarea, id_campo, valor) VALUES (?, ?, ?)");
-                        $stmt_campo->bind_param("iis", $id_tarea, $id_campo, $valor);
+                foreach ($_POST['campos_adicionales'] as $campo) {
+                    if (!empty($campo['nombre']) && !empty($campo['valor'])) {
+                        $stmt_campo = $conexion->prepare("INSERT INTO campos_adicionales (id_tarea, id_usuario, nombre, valor) VALUES (?, ?, ?, ?)");
+                        
+                        if (!$stmt_campo) {
+                            throw new Exception("Error al preparar consulta de campo: " . $conexion->error);
+                        }
+                        
+                        $stmt_campo->bind_param("iiss", $id_tarea, $_SESSION['id_usuario'], $campo['nombre'], $campo['valor']);
                         
                         if (!$stmt_campo->execute()) {
                             throw new Exception("Error al insertar campo adicional: " . $stmt_campo->error);
@@ -108,6 +112,11 @@ include 'header.php';
                 </div>
                 
                 <div class="mb-3">
+                    <label for="categoria" class="form-label">Categoría</label>
+                    <input type="text" class="form-control" id="categoria" name="categoria" placeholder="Ej: Desarrollo, Diseño, Marketing...">
+                </div>
+                
+                <div class="mb-3">
                     <label for="descripcion" class="form-label">Descripción</label>
                     <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
                 </div>
@@ -135,10 +144,10 @@ include 'header.php';
             </div>
         </div>
         
-        <!-- Campos adicionales -->
+        <!-- Campos adicionales personalizados -->
         <div class="card mb-4 shadow-sm">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-list-check"></i> Campos Adicionales</span>
+                <span><i class="bi bi-list-check"></i> Campos Adicionales (Opcionales)</span>
                 <button type="button" class="btn btn-sm btn-light" id="agregarCampo">
                     <i class="bi bi-plus"></i> Agregar Campo
                 </button>
@@ -163,23 +172,10 @@ include 'header.php';
 <div id="plantillaCampo" class="mb-3 campo-adicional" style="display: none;">
     <div class="row g-3 align-items-center">
         <div class="col-md-4">
-            <select class="form-select campo-select" name="campo_seleccionado">
-                <option value="">Seleccione un campo...</option>
-                <?php foreach ($campos_adicionales as $campo): ?>
-                    <option value="<?= $campo['id_campo'] ?>" data-tipo="<?= $campo['tipo'] ?>">
-                        <?= htmlspecialchars($campo['nombre']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
+            <input type="text" class="form-control campo-nombre" name="campo_nombre" placeholder="Nombre del campo">
         </div>
         <div class="col-md-6">
-            <input type="text" class="form-control campo-valor" name="campo_valor" disabled>
-            <textarea class="form-control campo-valor" name="campo_valor" rows="2" style="display: none;" disabled></textarea>
-            <input type="date" class="form-control campo-valor" name="campo_valor" style="display: none;" disabled>
-            <select class="form-select campo-valor" name="campo_valor" style="display: none;" disabled>
-                <option value="1">Sí</option>
-                <option value="0">No</option>
-            </select>
+            <input type="text" class="form-control campo-valor" name="campo_valor" placeholder="Valor">
         </div>
         <div class="col-md-2">
             <button type="button" class="btn btn-danger btn-eliminar-campo">
@@ -202,24 +198,15 @@ document.addEventListener('DOMContentLoaded', function() {
         nuevoCampo.id = '';
         
         // Actualizar nombres de los campos para el formulario
-        const selects = nuevoCampo.querySelectorAll('select[name="campo_seleccionado"]');
-        const inputs = nuevoCampo.querySelectorAll('.campo-valor');
+        const nombreCampo = nuevoCampo.querySelector('.campo-nombre');
+        const valorCampo = nuevoCampo.querySelector('.campo-valor');
         
-        selects.forEach(select => {
-            select.name = `campos_adicionales[${contadorCampos}]`;
-        });
-        
-        inputs.forEach(input => {
-            input.name = `campos_adicionales_valor[${contadorCampos}]`;
-            input.disabled = false;
-        });
+        nombreCampo.name = `campos_adicionales[${contadorCampos}][nombre]`;
+        valorCampo.name = `campos_adicionales[${contadorCampos}][valor]`;
         
         // Agregar al contenedor
         document.getElementById('camposAdicionalesContainer').appendChild(nuevoCampo);
         contadorCampos++;
-        
-        // Configurar evento para cambiar tipo de campo
-        configurarEventosCampo(nuevoCampo);
     });
     
     // Eliminar campo
@@ -241,48 +228,6 @@ document.addEventListener('DOMContentLoaded', function() {
             form.classList.add('was-validated');
         }, false);
     });
-    
-    // Función para configurar eventos de cambio de tipo de campo
-    function configurarEventosCampo(campoElement) {
-        const selectCampo = campoElement.querySelector('.campo-select');
-        const contenedorValor = campoElement.querySelector('.col-md-6');
-        
-        selectCampo.addEventListener('change', function() {
-            const tipo = this.options[this.selectedIndex].dataset.tipo;
-            const inputs = contenedorValor.querySelectorAll('.campo-valor');
-            
-            // Ocultar todos los inputs primero
-            inputs.forEach(input => {
-                input.style.display = 'none';
-                input.disabled = true;
-            });
-            
-            // Mostrar el input correspondiente al tipo
-            let inputMostrar;
-            switch(tipo) {
-                case 'texto':
-                    inputMostrar = contenedorValor.querySelector('.campo-valor[type="text"]');
-                    break;
-                case 'textarea':
-                    inputMostrar = contenedorValor.querySelector('.campo-valor[type="textarea"]');
-                    break;
-                case 'fecha':
-                    inputMostrar = contenedorValor.querySelector('.campo-valor[type="date"]');
-                    break;
-                case 'booleano':
-                    inputMostrar = contenedorValor.querySelector('.campo-valor[type="select"]');
-                    break;
-                default:
-                    inputMostrar = contenedorValor.querySelector('.campo-valor[type="text"]');
-            }
-            
-            if (inputMostrar) {
-                inputMostrar.style.display = 'block';
-                inputMostrar.disabled = false;
-                inputMostrar.required = selectCampo.required;
-            }
-        });
-    }
 });
 </script>
 

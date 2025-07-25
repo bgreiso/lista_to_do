@@ -190,24 +190,32 @@ if ($result) {
                         </td>
                         <td><?= date('d/m/Y H:i', strtotime($tarea['fecha_creacion'])) ?></td>
                         <td>
-                            <div class="d-flex justify-content-center gap-2">
-                                <a href="editar_tarea.php?id=<?= $tarea['id_tarea'] ?>" 
-                                   class="btn btn-sm btn-primary p-2" 
-                                   title="Editar"
-                                   data-bs-toggle="tooltip">
+                        <div class="btn-group" role="group" aria-label="Acciones tarea">
+                                <!-- Botón Editar con modal -->
+                                <button type="button" 
+                                        class="btn btn-primary btn-sm" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editarTareaModal"
+                                        data-id="<?= $tarea['id_tarea'] ?>"
+                                        title="Editar tarea">
                                     <i class="bi bi-pencil-fill"></i>
-                                </a>
-                                <a href="eliminar_tarea.php?id=<?= $tarea['id_tarea'] ?>" 
-                                   class="btn btn-sm btn-danger p-2" 
-                                   title="Eliminar"
-                                   data-bs-toggle="tooltip"
-                                   onclick="return confirm('¿Estás seguro de eliminar esta tarea?')">
+                                </button>
+                                
+                                <button type="button" 
+                                        class="btn btn-danger btn-sm" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#eliminarTareaModal"
+                                        data-id="<?= $tarea['id_tarea'] ?>" 
+                                        data-titulo="<?= htmlspecialchars($tarea['titulo']) ?>"
+                                        title="Eliminar tarea">
                                     <i class="bi bi-trash-fill"></i>
-                                </a>
+                                </button>
+                                
+                                <!-- Botón Ver Detalles -->
                                 <a href="ver.php?id=<?= $tarea['id_tarea'] ?>" 
-                                   class="btn btn-sm btn-success p-2" 
-                                   title="Ver detalles"
-                                   data-bs-toggle="tooltip">
+                                class="btn btn-success btn-sm" 
+                                title="Ver detalles"
+                                data-bs-toggle="tooltip">
                                     <i class="bi bi-eye-fill"></i>
                                 </a>
                             </div>
@@ -220,5 +228,192 @@ if ($result) {
     </div>
 </div>
 </div>
+
+<!-- Modal para Editar Tarea -->
+<div class="modal fade" id="editarTareaModal" tabindex="-1" aria-labelledby="editarTareaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarTareaModalLabel">Editar Tarea</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formEditarTarea" action="editar_tarea.php" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="id_tarea" id="editIdTarea">
+                    
+                    <div class="mb-3">
+                        <label for="editTitulo" class="form-label">Título *</label>
+                        <input type="text" class="form-control" id="editTitulo" name="titulo" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editDescripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="editDescripcion" name="descripcion" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editHerramientas" class="form-label">Herramientas/Recursos</label>
+                        <textarea class="form-control" id="editHerramientas" name="herramientas" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editAsignado" class="form-label">Asignar a *</label>
+                            <select class="form-select" id="editAsignado" name="id_usuario_asignado" required>
+                                <?php 
+                                $usuarios = $conexion->query("SELECT id_usuario, nombre FROM usuarios ORDER BY nombre");
+                                while ($usuario = $usuarios->fetch_assoc()): ?>
+                                    <option value="<?= $usuario['id_usuario'] ?>"><?= htmlspecialchars($usuario['nombre']) ?></option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editEstatus" class="form-label">Estatus *</label>
+                            <select class="form-select" id="editEstatus" name="id_estatus" required>
+                                <?php 
+                                $estatus = $conexion->query("SELECT id_estatus, nombre FROM estatus ORDER BY id_estatus");
+                                while ($est = $estatus->fetch_assoc()): ?>
+                                    <option value="<?= $est['id_estatus'] ?>"><?= htmlspecialchars($est['nombre']) ?></option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Eliminar Tarea -->
+<div class="modal fade" id="eliminarTareaModal" tabindex="-1" aria-labelledby="eliminarTareaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="eliminarTareaModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formEliminarTarea" action="eliminar_tarea.php" method="post">
+                <input type="hidden" name="id_tarea" id="idTareaEliminar">
+                <div class="modal-body">
+                    <p>¿Está seguro que desea eliminar la tarea <strong id="tituloTareaEliminar"></strong>?</p>
+                    <p class="text-danger">Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Manejar modal de edición
+document.addEventListener('DOMContentLoaded', function() {
+    // Modal de edición
+    var editarModal = document.getElementById('editarTareaModal');
+    editarModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var idTarea = button.getAttribute('data-id');
+        
+        // Obtener datos de la tarea via fetch API
+        fetch('obtener_tarea.php?id=' + idTarea)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('editIdTarea').value = data.id_tarea;
+                document.getElementById('editTitulo').value = data.titulo;
+                document.getElementById('editDescripcion').value = data.descripcion;
+                document.getElementById('editHerramientas').value = data.herramientas;
+                document.getElementById('editAsignado').value = data.id_usuario_asignado;
+                document.getElementById('editEstatus').value = data.id_estatus;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al cargar los datos de la tarea');
+            });
+    });
+    
+    // Configurar el formulario de edición para evitar recarga de página
+    document.getElementById('formEditarTarea').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const buttonSubmit = this.querySelector('button[type="submit"]');
+        buttonSubmit.disabled = true;
+        buttonSubmit.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+
+        fetch('editar_tarea.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.text();
+        })
+        .then(data => {
+            // Recargar la página después de 1 segundo
+            setTimeout(() => window.location.reload(), 1000);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al guardar: ' + error.message);
+        })
+        .finally(() => {
+            buttonSubmit.disabled = false;
+            buttonSubmit.innerHTML = 'Guardar Cambios';
+        });
+    });
+
+    // Modal de eliminación
+    const eliminarModal = document.getElementById('eliminarTareaModal');
+    eliminarModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const idTarea = button.getAttribute('data-id');
+        const tituloTarea = button.getAttribute('data-titulo');
+        
+        document.getElementById('idTareaEliminar').value = idTarea;
+        document.getElementById('tituloTareaEliminar').textContent = tituloTarea;
+    });
+
+    // Configurar el formulario de eliminación
+    document.getElementById('formEliminarTarea').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const buttonSubmit = this.querySelector('button[type="submit"]');
+        buttonSubmit.disabled = true;
+        buttonSubmit.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Eliminando...';
+
+        fetch('eliminar_tarea.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Recargar la página después de 1 segundo
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al eliminar: ' + error.message);
+        })
+        .finally(() => {
+            buttonSubmit.disabled = false;
+            buttonSubmit.innerHTML = 'Eliminar';
+        });
+    });
+});
+</script>
 
 <?php include 'footer.php'; ?>
