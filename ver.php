@@ -42,6 +42,20 @@ $query_campos->execute();
 $resultado_campos = $query_campos->get_result();
 $campos_adicionales = $resultado_campos->fetch_all(MYSQLI_ASSOC);
 
+// Obtener subtareas
+$subtareas = [];
+$query_subtareas = $conexion->prepare("
+    SELECT t.*, e.nombre as estado 
+    FROM tareas t
+    JOIN estatus e ON t.id_estatus = e.id_estatus
+    WHERE t.id_tarea_padre = ?
+    ORDER BY fecha_creacion ASC
+");
+$query_subtareas->bind_param("i", $id_tarea);
+$query_subtareas->execute();
+$resultado_subtareas = $query_subtareas->get_result();
+$subtareas = $resultado_subtareas->fetch_all(MYSQLI_ASSOC);
+
 // Obtener comentarios
 $comentarios = [];
 $query_comentarios = $conexion->prepare("
@@ -62,9 +76,14 @@ include 'header.php';
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3><i class="bi bi-card-checklist"></i> Detalles de la Tarea</h3>
-        <a href="tablero.php" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Volver al Tablero
-        </a>
+        <div>
+            <a href="editar_tarea.php?id=<?= $id_tarea ?>" class="btn btn-primary me-2">
+                <i class="bi bi-pencil"></i> Editar
+            </a>
+            <a href="tablero.php" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver al Tablero
+            </a>
+        </div>
     </div>
 
     <?php if (isset($_SESSION['mensaje_exito'])): ?>
@@ -85,6 +104,14 @@ include 'header.php';
                 <div class="col-md-6">
                     <h5><i class="bi bi-info-circle"></i> Información Básica</h5>
                     <ul class="list-group list-group-flush">
+                    <?php if ($tarea['id_tarea_padre']): ?>
+                        <li class="list-group-item">
+                            <strong><i class="bi bi-diagram-2"></i> Tarea padre:</strong> 
+                            <a href="ver.php?id=<?= $tarea['id_tarea_padre'] ?>">
+                                Ver tarea principal
+                            </a>
+                        </li>
+                        <?php endif; ?>
                         <li class="list-group-item">
                             <strong><i class="bi bi-person"></i> Creada por:</strong> 
                             <?= htmlspecialchars($tarea['creador']) ?>
@@ -167,6 +194,38 @@ include 'header.php';
                         </div>
                     </div>
                     <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Sección de subtareas -->
+            <?php if (!empty($subtareas)): ?>
+            <div class="mb-4">
+                <h5><i class="bi bi-list-task"></i> Subtareas</h5>
+                <div class="row">
+                <?php foreach ($subtareas as $subtarea): ?>
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <strong><?= htmlspecialchars($subtarea['titulo']) ?></strong>
+                                <span class="badge bg-<?= 
+                                    $subtarea['id_estatus'] == 3 ? 'success' : 
+                                    ($subtarea['id_estatus'] == 2 ? 'warning' : 'info') 
+                                ?>">
+                                    <?= htmlspecialchars($subtarea['estado'] ?? 'Pendiente') ?>
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <?php if (!empty($subtarea['descripcion'])): ?>
+                                    <p><?= nl2br(htmlspecialchars($subtarea['descripcion'])) ?></p>
+                                <?php endif; ?>
+                                <a href="ver.php?id=<?= $subtarea['id_tarea'] ?>" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Ver detalles
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
                 </div>
             </div>
             <?php endif; ?>

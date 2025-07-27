@@ -1,5 +1,6 @@
 <?php
 require_once 'config.php';
+require_once 'auth.php';
 
 header('Content-Type: application/json');
 
@@ -8,54 +9,56 @@ try {
         throw new Exception('Método no permitido');
     }
 
-    $id_tarea = isset($_POST['id_tarea']) ? intval($_POST['id_tarea']) : 0;
-    
+    // Validar ID de tarea
+    if (!isset($_POST['id_tarea']) || !is_numeric($_POST['id_tarea'])) {
+        throw new Exception('ID de tarea no proporcionado o inválido');
+    }
+
+    $id_tarea = intval($_POST['id_tarea']);
+
     if ($id_tarea <= 0) {
-        throw new Exception('ID de tarea inválido: ' . $_POST['id_tarea']);
+        throw new Exception('ID de tarea debe ser mayor que cero');
     }
 
-    if (!$conexion) {
-        throw new Exception('Error de conexión a la base de datos');
-    }
+    $conexion->begin_transaction();
 
-    // Desactivar restricciones de clave foránea
-    $conexion->query("SET FOREIGN_KEY_CHECKS = 0");
-
-    // Primero eliminar campos adicionales
-    $conexion->query("DELETE FROM campos_adicionales WHERE id_tarea = $id_tarea");
-
-    // Luego eliminar la tarea
-    $sql = "DELETE FROM tareas WHERE id_tarea = ?";
-    $stmt = $conexion->prepare($sql);
+    // 1. Eliminar campos adicionales
+    $stmt_campos = $conexion->prepare("DELETE FROM campos_adicionales WHERE id_tarea = ?");
+    $stmt_campos->bind_param('i', $id_tarea);
     
-    if (!$stmt) {
-        throw new Exception('Error al preparar consulta: ' . $conexion->error);
+    if (!$stmt_campos->execute()) {
+        throw new Exception("Error al eliminar campos adicionales: " . $stmt_campos->error);
     }
 
-    $stmt->bind_param('i', $id_tarea);
-    $resultado = $stmt->execute();
-
-    // Reactivar restricciones
-    $conexion->query("SET FOREIGN_KEY_CHECKS = 1");
-
-    if (!$resultado) {
-        throw new Exception('Error al ejecutar consulta: ' . $stmt->error);
+    // 2. Eliminar subtareas (si existen)
+    $stmt_subtareas = $conexion->prepare("DELETE FROM tareas WHERE id_tarea_padre = ?");
+    $stmt_subtareas->bind_param('i', $id_tarea);
+    
+    if (!$stmt_subtareas->execute()) {
+        throw new Exception("Error al eliminar subtareas: " . $stmt_subtareas->error);
     }
 
-    if ($stmt->affected_rows === 0) {
-        throw new Exception('No se encontró la tarea con ID: ' . $id_tarea);
+    // 3. Eliminar la tarea principal
+    $stmt_tarea = $conexion->prepare("DELETE FROM tareas WHERE id_tarea = ?");
+    $stmt_tarea->bind_param('i', $id_tarea);
+    
+    if (!$stmt_tarea->execute()) {
+        throw new Exception("Error al eliminar tarea: " . $stmt_tarea->error);
     }
+
+    $conexion->commit();
 
     echo json_encode([
         'success' => true,
-        'message' => 'Tarea eliminada correctamente'
+        'message' => 'Tarea eliminada correctamente',
+        'redirect' => 'todas.php'
     ]);
 
 } catch (Exception $e) {
     if (isset($conexion)) {
-        $conexion->query("SET FOREIGN_KEY_CHECKS = 1");
+        $conexion->rollback();
     }
-    
+
     http_response_code(400);
     echo json_encode([
         'success' => false,

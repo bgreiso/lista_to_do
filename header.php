@@ -19,7 +19,7 @@ require_once 'auth.php';
     
     <div class="main-content">
         <!-- Barra de navegación superior mejorada -->
-        <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+        <nav class="navbar navbar-expand navbar-light bg-primary topbar mb-4 static-top shadow">
             <!-- Botón para mostrar/ocultar sidebar en móviles -->
             <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle me-3">
                 <i class="bi bi-list"></i>

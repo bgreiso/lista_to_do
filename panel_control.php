@@ -160,40 +160,36 @@ $usuarios_por_depto = $conexion->query("
                         <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
                                     <th>Nombre</th>
                                     <th>Usuario</th>
                                     <th>Departamento</th>
-                                    <th>Fecha Registro</th>
-                                    <th>Acciones</th>
+                                    <th>Último acceso</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php
                                 $usuarios = $conexion->query("
-                                    SELECT u.id_usuario, u.nombre, u.usuario, u.fecha_registro, d.nombre as departamento
+                                    SELECT u.nombre, u.usuario, u.ultimo_acceso, d.nombre as departamento
                                     FROM usuarios u
                                     LEFT JOIN departamentos d ON u.id_departamento = d.id_departamento
-                                    ORDER BY u.fecha_registro DESC
+                                    ORDER BY u.ultimo_acceso DESC
                                     LIMIT 5
                                 ");
                                 
+                                if ($usuarios === false) {
+                                    die("Error en la consulta: " . $conexion->error);
+                                }
+                                
                                 while ($usuario = $usuarios->fetch_assoc()):
+                                    $fechaMostrar = !empty($usuario['ultimo_acceso']) ? 
+                                        date('d/m/Y H:i', strtotime($usuario['ultimo_acceso'])) : 
+                                        'Nunca ha accedido';
                                 ?>
                                 <tr>
-                                    <td><?= $usuario['id_usuario'] ?></td>
                                     <td><?= htmlspecialchars($usuario['nombre']) ?></td>
                                     <td><?= htmlspecialchars($usuario['usuario']) ?></td>
                                     <td><?= htmlspecialchars($usuario['departamento']) ?></td>
-                                    <td><?= date('d/m/Y', strtotime($usuario['fecha_registro'])) ?></td>
-                                    <td>
-                                        <a href="usuarios/editar.php?id=<?= $usuario['id_usuario'] ?>" class="btn btn-sm btn-primary">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <a href="usuarios/eliminar.php?id=<?= $usuario['id_usuario'] ?>" class="btn btn-sm btn-danger">
-                                            <i class="bi bi-trash"></i>
-                                        </a>
-                                    </td>
+                                    <td><?= $fechaMostrar ?></td>
                                 </tr>
                                 <?php endwhile; ?>
                             </tbody>

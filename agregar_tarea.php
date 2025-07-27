@@ -11,6 +11,13 @@ if (esAdmin()) {
     }
 }
 
+// Cargar tareas existentes para asignar como padre (si es necesario)
+$tareasExistentes = [];
+$queryTareas = $conexion->query("SELECT id_tarea, titulo FROM tareas ORDER BY titulo");
+if ($queryTareas) {
+    $tareasExistentes = $queryTareas->fetch_all(MYSQLI_ASSOC);
+}
+
 $mensaje = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $titulo = trim($_POST['titulo'] ?? '');
@@ -18,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $herramientas = trim($_POST['herramientas'] ?? '');
     $categoria = trim($_POST['categoria'] ?? '');
     $id_estatus = 1; // Por defecto, pendiente
+    $id_tarea_padre = isset($_POST['id_tarea_padre']) ? (int)$_POST['id_tarea_padre'] : null;
     
     // Determinar a quién se asigna la tarea
     $id_usuario_asignado = esAdmin() && isset($_POST['id_usuario_asignado']) 
@@ -33,16 +41,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             // Iniciar transacción
             $conexion->begin_transaction();
+
+            if ($id_tarea_padre !== null) {
+                // Verificar que la tarea padre existe
+                $stmt_verificar = $conexion->prepare("SELECT id_tarea FROM tareas WHERE id_tarea = ?");
+                $stmt_verificar->bind_param("i", $id_tarea_padre);
+                $stmt_verificar->execute();
+                $stmt_verificar->store_result();
+                
+                if ($stmt_verificar->num_rows === 0) {
+                    $mensaje = '<div class="alert alert-danger">La tarea padre seleccionada no existe.</div>';
+                    $id_tarea_padre = null; // Ignorar la relación si no existe
+                }
+            }
             
             // Insertar la tarea principal
-            $stmt = $conexion->prepare("INSERT INTO tareas (titulo, descripcion, herramientas, categoria, id_usuario, id_usuario_asignado, id_estatus, fecha_creacion) 
-                                      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+            $stmt = $conexion->prepare("INSERT INTO tareas (titulo, descripcion, herramientas, categoria, id_usuario, id_usuario_asignado, id_estatus, fecha_creacion, id_tarea_padre) 
+                                      VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)");
             
             if (!$stmt) {
                 throw new Exception("Error al preparar la consulta: " . $conexion->error);
             }
             
-            $stmt->bind_param("ssssiii", $titulo, $descripcion, $herramientas, $categoria, $_SESSION['id_usuario'], $id_usuario_asignado, $id_estatus);
+            $stmt->bind_param("ssssiiii", $titulo, $descripcion, $herramientas, $categoria, $_SESSION['id_usuario'], $id_usuario_asignado, $id_estatus, $id_tarea_padre);
             
             if (!$stmt->execute()) {
                 throw new Exception("Error al insertar tarea: " . $stmt->error);
@@ -64,6 +85,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         if (!$stmt_campo->execute()) {
                             throw new Exception("Error al insertar campo adicional: " . $stmt_campo->error);
+                        }
+                    }
+                }
+            }
+            
+            // Procesar subtareas (si existen)
+            if (!empty($_POST['subtareas'])) {
+                foreach ($_POST['subtareas'] as $subtarea) {
+                    if (!empty($subtarea['titulo'])) {
+                        $stmt_subtarea = $conexion->prepare("INSERT INTO tareas (titulo, descripcion, id_usuario, id_usuario_asignado, id_estatus, fecha_creacion, id_tarea_padre) 
+                                                             VALUES (?, ?, ?, ?, ?, NOW(), ?)");
+                        
+                        if (!$stmt_subtarea) {
+                            throw new Exception("Error al preparar consulta de subtarea: " . $conexion->error);
+                        }
+                        
+                        $desc_subtarea = $subtarea['descripcion'] ?? '';
+                        $stmt_subtarea->bind_param("sssiii", $subtarea['titulo'], $desc_subtarea, $_SESSION['id_usuario'], $id_usuario_asignado, $id_estatus, $id_tarea);
+                        
+                        if (!$stmt_subtarea->execute()) {
+                            throw new Exception("Error al insertar subtarea: " . $stmt_subtarea->error);
                         }
                     }
                 }
@@ -126,6 +168,18 @@ include 'header.php';
                     <textarea class="form-control" id="herramientas" name="herramientas" rows="2"></textarea>
                 </div>
                 
+                <?php if (!empty($tareasExistentes)): ?>
+                <div class="mb-3">
+                    <label for="id_tarea_padre" class="form-label">Tarea padre (opcional)</label>
+                    <select class="form-select" id="id_tarea_padre" name="id_tarea_padre">
+                        <option value="">-- Ninguna (tarea principal) --</option>
+                        <?php foreach ($tareasExistentes as $tarea): ?>
+                            <option value="<?= $tarea['id_tarea'] ?>"><?= htmlspecialchars($tarea['titulo']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+                
                 <?php if (esAdmin() && !empty($usuarios)): ?>
                 <div class="mb-3">
                     <label for="id_usuario_asignado" class="form-label">Asignar a</label>
@@ -141,6 +195,19 @@ include 'header.php';
                 <?php else: ?>
                     <input type="hidden" name="id_usuario_asignado" value="<?= $_SESSION['id_usuario'] ?>">
                 <?php endif; ?>
+            </div>
+        </div>
+        
+        <!-- Sección de subtareas -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-list-task"></i> Subtareas (Opcionales)</span>
+                <button type="button" class="btn btn-sm btn-light" id="agregarSubtarea">
+                    <i class="bi bi-plus"></i> Agregar Subtarea
+                </button>
+            </div>
+            <div class="card-body" id="subtareasContainer">
+                <!-- Las subtareas se agregarán aquí dinámicamente -->
             </div>
         </div>
         
@@ -185,12 +252,34 @@ include 'header.php';
     </div>
 </div>
 
+<!-- Plantilla para subtareas (hidden) -->
+<div id="plantillaSubtarea" class="mb-3 subtarea" style="display: none;">
+    <div class="card mb-2">
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-5">
+                    <input type="text" class="form-control subtarea-titulo" name="subtarea_titulo" placeholder="Título de la subtarea" required>
+                </div>
+                <div class="col-md-5">
+                    <textarea class="form-control subtarea-descripcion" name="subtarea_descripcion" rows="1" placeholder="Descripción (opcional)"></textarea>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-eliminar-subtarea">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Contador para campos adicionales
     let contadorCampos = 0;
+    let contadorSubtareas = 0;
     
-    // Agregar nuevo campo
+    // Agregar nuevo campo adicional
     document.getElementById('agregarCampo').addEventListener('click', function() {
         const plantilla = document.getElementById('plantillaCampo');
         const nuevoCampo = plantilla.cloneNode(true);
@@ -209,10 +298,36 @@ document.addEventListener('DOMContentLoaded', function() {
         contadorCampos++;
     });
     
-    // Eliminar campo
+    // Agregar nueva subtarea
+    document.getElementById('agregarSubtarea').addEventListener('click', function() {
+        const plantilla = document.getElementById('plantillaSubtarea');
+        const nuevaSubtarea = plantilla.cloneNode(true);
+        nuevaSubtarea.style.display = 'block';
+        nuevaSubtarea.id = '';
+        
+        // Actualizar nombres de los campos para el formulario
+        const tituloSubtarea = nuevaSubtarea.querySelector('.subtarea-titulo');
+        const descSubtarea = nuevaSubtarea.querySelector('.subtarea-descripcion');
+        
+        tituloSubtarea.name = `subtareas[${contadorSubtareas}][titulo]`;
+        descSubtarea.name = `subtareas[${contadorSubtareas}][descripcion]`;
+        
+        // Agregar al contenedor
+        document.getElementById('subtareasContainer').appendChild(nuevaSubtarea);
+        contadorSubtareas++;
+    });
+    
+    // Eliminar campo adicional
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('btn-eliminar-campo')) {
             e.target.closest('.campo-adicional').remove();
+        }
+    });
+    
+    // Eliminar subtarea
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-eliminar-subtarea')) {
+            e.target.closest('.subtarea').remove();
         }
     });
     

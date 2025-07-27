@@ -79,7 +79,6 @@ if ($result) {
 }
 ?>
 
-<!-- Resto del código HTML (formulario de filtros y tabla) -->
 <div class="container-fluid">
     <h1 class="h3 mb-4 text-gray-800">Todas las Tareas</h1>
     
@@ -142,108 +141,95 @@ if ($result) {
         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
             <h6 class="m-0 font-weight-bold text-primary">Listado de Tareas</h6>
         </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th>Título</th>
-                        <th>Creada por</th>
-                        <th>Asignada a</th>
-                        <th>Departamento</th>
-                        <th>Estatus</th>
-                        <th>Fecha Creación</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach($tareas as $tarea): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($tarea['titulo']) ?></td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div>
-                                    <div><?= htmlspecialchars($tarea['creador_nombre']) ?></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Creada por</th>
+                            <th>Asignada a</th>
+                            <th>Departamento</th>
+                            <th>Estatus</th>
+                            <th>Fecha Creación</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach($tareas as $tarea): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($tarea['titulo']) ?></td>
+                            <td><?= htmlspecialchars($tarea['creador_nombre']) ?></td>
+                            <td><?= htmlspecialchars($tarea['asignado_nombre']) ?></td>
+                            <td><?= htmlspecialchars($tarea['departamento_nombre']) ?></td>
+                            <td>
+                                <span class="badge bg-<?= 
+                                    $tarea['estatus'] == 'Completado' ? 'success' : 
+                                    ($tarea['estatus'] == 'Pendiente' ? 'warning' : 
+                                    ($tarea['estatus'] == 'En Progreso' ? 'info' : 'secondary')) 
+                                ?>">
+                                    <?= $tarea['estatus'] ?>
+                                </span>
+                            </td>
+                            <td><?= date('d/m/Y H:i', strtotime($tarea['fecha_creacion'])) ?></td>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <!-- Botón Editar -->
+                                    <button type="button" 
+                                            class="btn btn-primary btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editarTareaModal"
+                                            data-id="<?= $tarea['id_tarea'] ?>"
+                                            onclick="cargarDatosTarea(<?= $tarea['id_tarea'] ?>)">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+                                    
+                                    <!-- Botón Eliminar -->
+                                    <button type="button" 
+                                            class="btn btn-danger btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#eliminarTareaModal"
+                                            data-id="<?= $tarea['id_tarea'] ?>" 
+                                            data-titulo="<?= htmlspecialchars($tarea['titulo']) ?>">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                    
+                                    <!-- Botón Ver Detalles -->
+                                    <a href="ver.php?id=<?= $tarea['id_tarea'] ?>" 
+                                       class="btn btn-success btn-sm">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </a>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div>
-                                    <div><?= htmlspecialchars($tarea['asignado_nombre']) ?></div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge bg-primary">
-                                <?= htmlspecialchars($tarea['departamento_nombre']) ?>
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge bg-<?= 
-                                $tarea['estatus'] == 'Completado' ? 'success' : 
-                                ($tarea['estatus'] == 'Pendiente' ? 'warning' : 
-                                ($tarea['estatus'] == 'En Progreso' ? 'info' : 'secondary')) 
-                            ?>">
-                                <?= $tarea['estatus'] ?>
-                            </span>
-                        </td>
-                        <td><?= date('d/m/Y H:i', strtotime($tarea['fecha_creacion'])) ?></td>
-                        <td>
-                        <div class="btn-group" role="group" aria-label="Acciones tarea">
-                                <!-- Botón Editar con modal -->
-                                <button type="button" 
-                                        class="btn btn-primary btn-sm" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#editarTareaModal"
-                                        data-id="<?= $tarea['id_tarea'] ?>"
-                                        title="Editar tarea">
-                                    <i class="bi bi-pencil-fill"></i>
-                                </button>
-                                
-                                <button type="button" 
-                                        class="btn btn-danger btn-sm" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#eliminarTareaModal"
-                                        data-id="<?= $tarea['id_tarea'] ?>" 
-                                        data-titulo="<?= htmlspecialchars($tarea['titulo']) ?>"
-                                        title="Eliminar tarea">
-                                    <i class="bi bi-trash-fill"></i>
-                                </button>
-                                
-                                <!-- Botón Ver Detalles -->
-                                <a href="ver.php?id=<?= $tarea['id_tarea'] ?>" 
-                                class="btn btn-success btn-sm" 
-                                title="Ver detalles"
-                                data-bs-toggle="tooltip">
-                                    <i class="bi bi-eye-fill"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 </div>
 
 <!-- Modal para Editar Tarea -->
 <div class="modal fade" id="editarTareaModal" tabindex="-1" aria-labelledby="editarTareaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="editarTareaModalLabel">Editar Tarea</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="formEditarTarea" action="editar_tarea.php" method="post">
+            <form id="formEditarTarea" action="actualizar_tarea.php" method="post">
                 <div class="modal-body">
                     <input type="hidden" name="id_tarea" id="editIdTarea">
                     
                     <div class="mb-3">
                         <label for="editTitulo" class="form-label">Título *</label>
                         <input type="text" class="form-control" id="editTitulo" name="titulo" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editCategoria" class="form-label">Categoría</label>
+                        <input type="text" class="form-control" id="editCategoria" name="categoria">
                     </div>
                     
                     <div class="mb-3">
@@ -258,6 +244,17 @@ if ($result) {
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
+                            <label for="editEstatus" class="form-label">Estatus *</label>
+                            <select class="form-select" id="editEstatus" name="id_estatus" required>
+                                <?php 
+                                $estatus = $conexion->query("SELECT * FROM estatus ORDER BY id_estatus");
+                                while ($est = $estatus->fetch_assoc()): ?>
+                                    <option value="<?= $est['id_estatus'] ?>"><?= htmlspecialchars($est['nombre']) ?></option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
                             <label for="editAsignado" class="form-label">Asignar a *</label>
                             <select class="form-select" id="editAsignado" name="id_usuario_asignado" required>
                                 <?php 
@@ -267,16 +264,25 @@ if ($result) {
                                 <?php endwhile; ?>
                             </select>
                         </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="editEstatus" class="form-label">Estatus *</label>
-                            <select class="form-select" id="editEstatus" name="id_estatus" required>
-                                <?php 
-                                $estatus = $conexion->query("SELECT id_estatus, nombre FROM estatus ORDER BY id_estatus");
-                                while ($est = $estatus->fetch_assoc()): ?>
-                                    <option value="<?= $est['id_estatus'] ?>"><?= htmlspecialchars($est['nombre']) ?></option>
-                                <?php endwhile; ?>
-                            </select>
+                    </div>
+                    
+                    <!-- Sección para campos adicionales -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-secondary text-white">
+                            Campos Adicionales
+                        </div>
+                        <div class="card-body" id="camposAdicionalesContainer">
+                            <!-- Los campos se cargarán dinámicamente -->
+                        </div>
+                    </div>
+                    
+                    <!-- Sección para subtareas -->
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            Subtareas
+                        </div>
+                        <div class="card-body" id="subtareasContainer">
+                            <!-- Las subtareas se cargarán dinámicamente -->
                         </div>
                     </div>
                 </div>
@@ -295,9 +301,9 @@ if ($result) {
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title" id="eliminarTareaModalLabel">Confirmar Eliminación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="formEliminarTarea" action="eliminar_tarea.php" method="post">
+            <form method="post" action="eliminar_tarea.php">
                 <input type="hidden" name="id_tarea" id="idTareaEliminar">
                 <div class="modal-body">
                     <p>¿Está seguro que desea eliminar la tarea <strong id="tituloTareaEliminar"></strong>?</p>
@@ -313,106 +319,210 @@ if ($result) {
 </div>
 
 <script>
-// Manejar modal de edición
-document.addEventListener('DOMContentLoaded', function() {
-    // Modal de edición
-    var editarModal = document.getElementById('editarTareaModal');
-    editarModal.addEventListener('show.bs.modal', function (event) {
-        var button = event.relatedTarget;
-        var idTarea = button.getAttribute('data-id');
-        
-        // Obtener datos de la tarea via fetch API
-        fetch('obtener_tarea.php?id=' + idTarea)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('editIdTarea').value = data.id_tarea;
-                document.getElementById('editTitulo').value = data.titulo;
-                document.getElementById('editDescripcion').value = data.descripcion;
-                document.getElementById('editHerramientas').value = data.herramientas;
-                document.getElementById('editAsignado').value = data.id_usuario_asignado;
-                document.getElementById('editEstatus').value = data.id_estatus;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error al cargar los datos de la tarea');
-            });
-    });
+// Configurar modal de eliminación
+document.getElementById('eliminarTareaModal').addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const idTarea = button.getAttribute('data-id');
+    const tituloTarea = button.getAttribute('data-titulo');
     
-    // Configurar el formulario de edición para evitar recarga de página
-    document.getElementById('formEditarTarea').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(this);
-        const buttonSubmit = this.querySelector('button[type="submit"]');
-        buttonSubmit.disabled = true;
-        buttonSubmit.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+    const modal = this;
+    modal.querySelector('#idTareaEliminar').value = idTarea;
+    modal.querySelector('#tituloTareaEliminar').textContent = tituloTarea;
+});
 
-        fetch('editar_tarea.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error en la respuesta del servidor');
-            }
-            return response.text();
-        })
-        .then(data => {
-            // Recargar la página después de 1 segundo
-            setTimeout(() => window.location.reload(), 1000);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error al guardar: ' + error.message);
-        })
-        .finally(() => {
-            buttonSubmit.disabled = false;
-            buttonSubmit.innerHTML = 'Guardar Cambios';
-        });
-    });
-
-    // Modal de eliminación
-    const eliminarModal = document.getElementById('eliminarTareaModal');
-    eliminarModal.addEventListener('show.bs.modal', function(event) {
-        const button = event.relatedTarget;
-        const idTarea = button.getAttribute('data-id');
-        const tituloTarea = button.getAttribute('data-titulo');
-        
-        document.getElementById('idTareaEliminar').value = idTarea;
-        document.getElementById('tituloTareaEliminar').textContent = tituloTarea;
-    });
-
-    // Configurar el formulario de eliminación
-    document.getElementById('formEliminarTarea').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(this);
-        const buttonSubmit = this.querySelector('button[type="submit"]');
-        buttonSubmit.disabled = true;
-        buttonSubmit.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Eliminando...';
-
-        fetch('eliminar_tarea.php', {
-            method: 'POST',
-            body: formData
-        })
+// Función para cargar datos de la tarea en el modal de edición
+function cargarDatosTarea(idTarea) {
+    fetch(`obtener_tarea.php?id=${idTarea}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Recargar la página después de 1 segundo
-                setTimeout(() => window.location.reload(), 1000);
+                // Llenar campos básicos
+                document.getElementById('editIdTarea').value = data.id_tarea;
+                document.getElementById('editTitulo').value = data.titulo;
+                document.getElementById('editDescripcion').value = data.descripcion || '';
+                document.getElementById('editHerramientas').value = data.herramientas || '';
+                document.getElementById('editEstatus').value = data.id_estatus;
+                document.getElementById('editAsignado').value = data.id_usuario_asignado;
+                
+                // Cargar campos adicionales
+                cargarCamposAdicionales(idTarea);
+                
+                // Cargar subtareas
+                cargarSubtareas(idTarea);
             } else {
-                throw new Error(data.message);
+                alert('Error al cargar los datos de la tarea: ' + (data.error || 'Desconocido'));
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error al eliminar: ' + error.message);
-        })
-        .finally(() => {
-            buttonSubmit.disabled = false;
-            buttonSubmit.innerHTML = 'Eliminar';
+            alert('Error al cargar los datos de la tarea');
         });
+}
+
+function cargarCamposAdicionales(idTarea) {
+    fetch(`obtener_campos_adicionales.php?id_tarea=${idTarea}`)
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('camposAdicionalesContainer');
+            container.innerHTML = '';
+            
+            if (data.success && data.campos.length > 0) {
+                data.campos.forEach((campo, index) => {
+                    const campoHTML = `
+                        <div class="mb-3 campo-adicional">
+                            <div class="row g-3 align-items-center">
+                                <div class="col-md-4">
+                                    <input type="hidden" name="campos_adicionales[${index}][id_campo]" value="${campo.id_campo}">
+                                    <input type="text" class="form-control" name="campos_adicionales[${index}][nombre]" 
+                                           value="${campo.nombre}" placeholder="Nombre del campo">
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" name="campos_adicionales[${index}][valor]" 
+                                           value="${campo.valor}" placeholder="Valor">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-danger btn-eliminar-campo">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += campoHTML;
+                });
+            } else {
+                container.innerHTML = '<p class="text-muted">No hay campos adicionales para esta tarea.</p>';
+            }
+        });
+}
+
+function cargarSubtareas(idTarea) {
+    fetch(`obtener_subtareas.php?id_tarea=${idTarea}`)
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('subtareasContainer');
+            container.innerHTML = '';
+            
+            if (data.success && data.subtareas.length > 0) {
+                data.subtareas.forEach((subtarea, index) => {
+                    const subtareaHTML = `
+                        <div class="mb-3 subtarea">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row g-3 align-items-center">
+                                        <div class="col-md-5">
+                                            <input type="hidden" name="subtareas[${index}][id_subtarea]" value="${subtarea.id_tarea}">
+                                            <input type="text" class="form-control" name="subtareas[${index}][titulo]" 
+                                                   value="${subtarea.titulo}" placeholder="Título de la subtarea" required>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <textarea class="form-control" name="subtareas[${index}][descripcion]" rows="1" 
+                                                      placeholder="Descripción (opcional)">${subtarea.descripcion || ''}</textarea>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-danger btn-eliminar-subtarea">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += subtareaHTML;
+                });
+            } else {
+                container.innerHTML = '<p class="text-muted">No hay subtareas para esta tarea.</p>';
+            }
+        });
+}
+
+// Manejar el envío del formulario de edición
+document.getElementById('formEditarTarea').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const form = this;
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error en la respuesta del servidor');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect;
+        } else {
+            throw new Error(data.message || 'Error al guardar cambios');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error: ' + error.message);
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Guardar Cambios';
     });
+});
+
+// Manejar el envío del formulario de eliminación
+document.querySelector('#eliminarTareaModal form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const form = this;
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Eliminando...';
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error en la respuesta del servidor');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('eliminarTareaModal')).hide();
+            window.location.href = data.redirect;
+        } else {
+            throw new Error(data.message || 'Error al eliminar la tarea');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error: ' + error.message);
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Eliminar';
+    });
+});
+
+// Manejar eliminación de campos y subtareas
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('btn-eliminar-campo')) {
+        e.target.closest('.campo-adicional').remove();
+    }
+    
+    if (e.target.classList.contains('btn-eliminar-subtarea')) {
+        e.target.closest('.subtarea').remove();
+    }
 });
 </script>
 

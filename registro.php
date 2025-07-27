@@ -128,116 +128,283 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Usuario</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="estilos.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4cc9f0;
+            --secondary-color: #4361ee;
+            --accent-color: #f72585;
+            --dark-color: #212529;
+            --light-color: #f8f9fa;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        
+        .login-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border-top: 4px solid var(--primary-color);
+            background: white;
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+        }
+        
+        .login-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .login-body {
+            padding: 2rem;
+        }
+        
+        .form-control-login {
+            border-radius: 8px;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .form-control-login:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(76, 201, 240, 0.25);
+        }
+        
+        .btn-login {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+            width: 100%;
+            color: white;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+        }
+        
+        .btn-outline-secondary {
+            border-radius: 8px;
+            padding: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .input-group-text-login {
+            background-color: #f1f3f5;
+            border: 1px solid #e0e0e0;
+            border-right: none;
+            border-radius: 8px 0 0 8px !important;
+        }
+        
+        .login-logo {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: white;
+        }
+        
+        .login-footer {
+            text-align: center;
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: #6c757d;
+            border-top: 1px solid #eee;
+        }
+        
+        .login-links {
+            margin-top: 1rem;
+            text-align: center;
+        }
+        
+        .login-links a {
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+        
+        .login-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .form-select {
+            border-radius: 8px;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(76, 201, 240, 0.25);
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+    </style>
 </head>
-<body class="bg-light">
-    <div class="container py-5">
+<body>
+    <div class="container">
         <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="card shadow">
-                    <div class="card-header bg-primary text-white">
-                        <h2 class="mb-0"><i class="bi bi-person-plus"></i> Registro de Usuario</h2>
+            <div class="col-md-8 col-lg-8">
+                <div class="login-card">
+                    <div class="login-header">
+                        <div class="login-logo">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <h2 class="mb-0">Registro de Usuario</h2>
                     </div>
-                    <div class="card-body p-4">
-                        <?php if (!empty($error)): ?>
-                            <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+                    <div class="login-body">
+                        <?php if ($error): ?>
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                <?= htmlspecialchars($error) ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
                         <?php endif; ?>
                         
-                        <form class="row g-3 needs-validation" method="POST" novalidate id="formRegistro">
-                            <!-- Nombre Completo -->
-                            <div class="col-md-12">
-                                <label for="nombre" class="form-label">Nombre Completo</label>
-                                <input type="text" class="form-control" id="nombre" name="nombre" required>
-                                <div class="invalid-feedback">
-                                    Por favor ingresa tu nombre completo.
+                        <form method="POST" class="mt-4" id="formRegistro" novalidate>
+                            <div class="row g-3">
+                                <!-- Nombre Completo -->
+                                <div class="col-md-12">
+                                    <label for="nombre" class="form-label fw-bold">Nombre Completo</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text input-group-text-login">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+                                        <input type="text" class="form-control form-control-login" id="nombre" name="nombre" required>
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Por favor ingresa tu nombre completo.
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <!-- Usuario -->
-                            <div class="col-md-6">
-                                <label for="usuario" class="form-label">Nombre de Usuario</label>
-                                <div class="input-group has-validation">
-                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                    <input type="text" class="form-control" id="usuario" name="usuario" required>
+                                
+                                <!-- Usuario -->
+                                <div class="col-md-6">
+                                    <label for="usuario" class="form-label fw-bold">Nombre de Usuario</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text input-group-text-login">
+                                            <i class="fas fa-at"></i>
+                                        </span>
+                                        <input type="text" class="form-control form-control-login" id="usuario" name="usuario" required>
+                                    </div>
                                     <div class="invalid-feedback">
                                         Por favor elige un nombre de usuario.
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <!-- Departamento -->
-                            <div class="col-md-6">
-                                <label for="id_departamento" class="form-label">Departamento</label>
-                                <select class="form-select" id="id_departamento" name="id_departamento" required>
-                                    <option value="" selected disabled>Seleccione...</option>
-                                    <?php foreach ($departamentos as $depto): ?>
-                                        <option value="<?= $depto['id_departamento'] ?>"><?= htmlspecialchars($depto['nombre']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            
-                            <!-- Cargo (se carga dinámicamente) -->
-                            <div class="col-md-6">
-                                <label for="id_cargo" class="form-label">Cargo</label>
-                                <select class="form-select" id="id_cargo" name="id_cargo" required disabled>
-                                    <option value="" selected disabled>Primero seleccione un departamento</option>
-                                </select>
-                            </div>
-                            
-                            <!-- Contraseña -->
-                            <div class="col-md-6">
-                                <label for="contrasena" class="form-label">Contraseña</label>
-                                <input type="password" class="form-control" id="contrasena" name="contrasena" required
-                                       pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}">
-                                <div class="invalid-feedback">
-                                    La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.
+                                
+                                <!-- Departamento -->
+                                <div class="col-md-6">
+                                    <label for="id_departamento" class="form-label fw-bold">Departamento</label>
+                                    <select class="form-select" id="id_departamento" name="id_departamento" required>
+                                        <option value="" selected disabled>Seleccione...</option>
+                                        <?php foreach ($departamentos as $depto): ?>
+                                            <option value="<?= $depto['id_departamento'] ?>"><?= htmlspecialchars($depto['nombre']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
                                 </div>
-                            </div>
-                            
-                            <!-- Confirmar Contraseña -->
-                            <div class="col-md-6">
-                                <label for="confirmar_contrasena" class="form-label">Confirmar Contraseña</label>
-                                <input type="password" class="form-control" id="confirmar_contrasena" name="confirmar_contrasena" required>
-                                <div class="invalid-feedback">
-                                    Las contraseñas deben coincidir.
+                                
+                                <!-- Cargo (se carga dinámicamente) -->
+                                <div class="col-md-6">
+                                    <label for="id_cargo" class="form-label fw-bold">Cargo</label>
+                                    <select class="form-select" id="id_cargo" name="id_cargo" required disabled>
+                                        <option value="" selected disabled>Primero seleccione un departamento</option>
+                                    </select>
                                 </div>
-                            </div>
-                            
-                            <!-- Términos y Condiciones -->
-                            <div class="col-12">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="terminos" required>
-                                    <label class="form-check-label" for="terminos">
-                                        Acepto los términos y condiciones
-                                    </label>
+                                
+                                <!-- Contraseña -->
+                                <div class="col-md-6">
+                                    <label for="contrasena" class="form-label fw-bold">Contraseña</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text input-group-text-login">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                        <input type="password" class="form-control form-control-login" id="contrasena" name="contrasena" required
+                                               pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}">
+                                    </div>
                                     <div class="invalid-feedback">
-                                        Debes aceptar los términos para continuar.
+                                        La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <!-- Botón de Registro -->
-                            <div class="col-12">
-                                <button class="btn btn-primary px-4" type="submit">
-                                    <i class="bi bi-person-plus"></i> Registrarse
-                                </button>
-                                <a href="inicio_sesion.php" class="btn btn-outline-secondary ms-2">
-                                    <i class="bi bi-box-arrow-in-right"></i> Ya tengo cuenta
-                                </a>
+                                
+                                <!-- Confirmar Contraseña -->
+                                <div class="col-md-6">
+                                    <label for="confirmar_contrasena" class="form-label fw-bold">Confirmar Contraseña</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text input-group-text-login">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                        <input type="password" class="form-control form-control-login" id="confirmar_contrasena" name="confirmar_contrasena" required>
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Las contraseñas deben coincidir.
+                                    </div>
+                                </div>
+                                
+                                <!-- Términos y Condiciones -->
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="terminos" required>
+                                        <label class="form-check-label" for="terminos">
+                                            Acepto los términos y condiciones
+                                        </label>
+                                        <div class="invalid-feedback">
+                                            Debes aceptar los términos para continuar.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Botones -->
+                                <div class="col-md-6">
+                                    <button class="btn btn-login" type="submit">
+                                        <i class="fas fa-user-plus me-2"></i> Registrarse
+                                    </button>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="inicio_sesion.php" class="btn btn-outline-secondary">
+                                        <i class="fas fa-sign-in-alt me-2"></i> Ya tengo cuenta
+                                    </a>
+                                </div>
                             </div>
                         </form>
+                    </div>
+                    <div class="login-footer">
+                        Sistema de Tareas © <?= date('Y') ?>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS Bundle con Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
     // Cargar cargos cuando cambia el departamento
     document.getElementById('id_departamento').addEventListener('change', function() {
