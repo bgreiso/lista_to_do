@@ -77,6 +77,9 @@ include 'header.php';
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3><i class="bi bi-card-checklist"></i> Detalles de la Tarea</h3>
         <div>
+            <a href="agregar_subtarea.php?id=<?= $id_tarea ?>" class="btn btn-success me-2">
+                <i class="bi bi-bookmarks-fill"></i> Agregar Subtarea
+            </a>
             <a href="editar_tarea.php?id=<?= $id_tarea ?>" class="btn btn-primary me-2">
                 <i class="bi bi-pencil"></i> Editar
             </a>

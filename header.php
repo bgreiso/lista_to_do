@@ -27,7 +27,7 @@ require_once 'auth.php';
             
             <!-- Título del panel -->
             <div class="d-none d-md-inline-block me-auto">
-                <h1 class="h4 mb-0 text-gray-800">
+                <h1 class="h4 mb-0 text-white">
                     <i class="bi bi-speedometer2 me-2"></i> Gestor de Tareas
                 </h1>
             </div>

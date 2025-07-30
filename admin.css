@@ -11,11 +11,11 @@ body {
     z-index: 1000;
 }
 
-.main-content {
-    width: calc(100% - 250px);
-    margin-left: 250px;
-    transition: all 0.3s;
+.sidebar.collapsed {
+    width: 70px;
+    overflow: hidden;
 }
+
 
 .sidebar.toggled {
     margin-left: -250px;
