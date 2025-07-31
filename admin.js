@@ -1,12 +1,20 @@
-// admin.js
 document.addEventListener('DOMContentLoaded', function() {
-    // Verifica si el elemento existe antes de agregar el event listener
-    const sidebarToggle = document.getElementById('sidebarToggleTop');
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', function() {
-            document.body.classList.toggle('sidebar-toggled');
-            document.querySelector('.sidebar').classList.toggle('toggled');
-        });
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const mainContent = document.querySelector('.main-content');
+
+    function applySidebarState(isCollapsed) {
+        if (isCollapsed) {
+            sidebar.classList.add('collapsed');
+            sidebarToggle.querySelector('i').classList.remove('bi-chevron-left');
+            sidebarToggle.querySelector('i').classList.add('bi-chevron-right');
+            mainContent.classList.add('collapsed');
+        } else {
+            sidebar.classList.remove('collapsed');
+            sidebarToggle.querySelector('i').classList.remove('bi-chevron-right');
+            sidebarToggle.querySelector('i').classList.add('bi-chevron-left');
+            mainContent.classList.remove('collapsed');
+        }
     }
 
     // Inicialización de tooltips

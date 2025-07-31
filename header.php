@@ -14,20 +14,16 @@ require_once 'auth.php';
     <link href="admin.css" rel="stylesheet">
     <link rel="icon" href="../assets/img/favicon.ico">
 </head>
-<body class="d-flex">
+<body class="main-container">
     <?php include 'sidebar.php'; ?>
     
     <div class="main-content">
         <!-- Barra de navegación superior mejorada -->
         <nav class="navbar navbar-expand navbar-light bg-primary topbar mb-4 static-top shadow">
-            <!-- Botón para mostrar/ocultar sidebar en móviles -->
-            <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle me-3">
-                <i class="bi bi-list"></i>
-            </button>
             
             <!-- Título del panel -->
             <div class="d-none d-md-inline-block me-auto">
-                <h1 class="h4 mb-0 text-white">
+                <h1 class="h4 mb-0 text-gray-800">
                     <i class="bi bi-speedometer2 me-2"></i> Gestor de Tareas
                 </h1>
             </div>

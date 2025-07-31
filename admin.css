@@ -9,16 +9,33 @@ body {
     transition: all 0.3s;
     position: fixed;
     z-index: 1000;
+    left: 0;
+    top: 0;
+}
+
+.main-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    flex: 1;
+    margin-left: 250px; /* Igual al ancho del sidebar */
+    transition: all 0.3s;
+    min-height: 100vh;
+    background-color: #f8f9fc;
+}
+
+.sidebar.toggled {
+    margin-left: -250px;
 }
 
 .sidebar.collapsed {
     width: 70px;
-    overflow: hidden;
 }
 
-
-.sidebar.toggled {
-    margin-left: -250px;
+.sidebar.collapsed ~ .main-content {
+    margin-left: 70px;
 }
 
 .sidebar.toggled ~ .main-content {
@@ -30,12 +47,13 @@ body {
     .sidebar {
         margin-left: -250px;
     }
+    
     .sidebar.toggled {
         margin-left: 0;
     }
+    
     .main-content {
-        width: 100%;
-        margin-left: 0;
+        margin-left: 0 !important;
     }
 }
 
