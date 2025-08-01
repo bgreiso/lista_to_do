@@ -1,3 +1,73 @@
+<?php
+require_once 'config.php';
+require_once 'auth.php';
+
+$tareas_por_estado = [];
+
+$estados = [];
+$query_estados = $conexion->query("SELECT * FROM estatus");
+if ($query_estados) {
+    $estados = $query_estados->fetch_all(MYSQLI_ASSOC);
+}
+
+// Obtener tareas para el usuario actual (o todas si es admin)
+foreach ($estados as $estado) {
+    $id_estatus = $estado['id_estatus'];
+    
+    if (esAdmin()) {
+        $stmt = $conexion->prepare("
+            SELECT t.*, u.nombre as asignado, e.nombre as estado 
+            FROM tareas t
+            JOIN usuarios u ON t.id_usuario_asignado = u.id_usuario
+            JOIN estatus e ON t.id_estatus = e.id_estatus
+            WHERE t.id_estatus = ?
+        ");
+    } else {
+        $stmt = $conexion->prepare("
+            SELECT t.*, u.nombre as asignado, e.nombre as estado 
+            FROM tareas t
+            JOIN usuarios u ON t.id_usuario_asignado = u.id_usuario
+            JOIN estatus e ON t.id_estatus = e.id_estatus
+            WHERE t.id_estatus = ? AND t.id_usuario_asignado = ?
+        ");
+        $stmt->bind_param("ii", $id_estatus, $_SESSION['id_usuario']);
+    }
+    
+    if (esAdmin()) {
+        $stmt->bind_param("i", $id_estatus);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $tareas_por_estado[$id_estatus] = $result->fetch_all(MYSQLI_ASSOC);
+}
+
+// Consulta para obtener las últimas 5 tareas
+if (esAdmin()) {
+    $query = $conexion->query("
+        SELECT t.id_tarea, t.titulo, t.descripcion, t.fecha_creacion, 
+               u.nombre as creador, e.nombre as estado
+        FROM tareas t
+        JOIN usuarios u ON t.id_usuario = u.id_usuario
+        JOIN estatus e ON t.id_estatus = e.id_estatus
+        ORDER BY t.fecha_creacion DESC
+        LIMIT 5
+    ");
+} else {
+    $query = $conexion->query("
+        SELECT t.id_tarea, t.titulo, t.descripcion, t.fecha_creacion, 
+               u.nombre as creador, e.nombre as estado
+        FROM tareas t
+        JOIN usuarios u ON t.id_usuario = u.id_usuario
+        JOIN estatus e ON t.id_estatus = e.id_estatus
+        WHERE t.id_usuario = '".$_SESSION['id_usuario']."'
+        ORDER BY t.fecha_creacion DESC
+        LIMIT 5
+    ");
+}
+
+?>
+
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
         <h6 class="m-0 font-weight-bold text-primary">Últimas Tareas</h6>

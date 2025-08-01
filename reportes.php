@@ -3,213 +3,463 @@ require_once 'config.php';
 require_once 'auth.php';
 include 'header.php';
 
-// Verificar autenticación
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+// Verificar autenticación y permisos
 verificarAutenticacion();
-
-// Verificar si el usuario es administrador
 $es_admin = esAdmin();
+$usuario_actual = obtenerUsuario();
 
-// Obtener datos del usuario
-$usuario = obtenerUsuario();
+// Clase para manejar reportes
+class ReporteTareas {
+    private $conexion;
+    
+    public function __construct($conexion) {
+        $this->conexion = $conexion;
+    }
+    
+    // Obtener filtros con validación
+    public function obtenerFiltros($es_admin, $usuario_actual) {
+        return [
+            'mes' => filter_input(INPUT_GET, 'mes', FILTER_VALIDATE_INT, [
+                'options' => ['default' => date('m'), 'min_range' => 1, 'max_range' => 12]
+            ]),
+            'ano' => filter_input(INPUT_GET, 'ano', FILTER_VALIDATE_INT, [
+                'options' => ['default' => date('Y'), 'min_range' => 2020, 'max_range' => date('Y')]
+            ]),
+            'usuario' => $es_admin ? filter_input(INPUT_GET, 'usuario', FILTER_VALIDATE_INT) : $usuario_actual['id'],
+            'departamento' => filter_input(INPUT_GET, 'departamento', FILTER_VALIDATE_INT)
+        ];
+    }
+    
+    // Obtener tareas culminadas
+    public function obtenerTareasCulminadas($filtros) {
+        $query = "SELECT t.*, u.nombre as asignado, d.nombre as departamento 
+                 FROM tareas t
+                 JOIN usuarios u ON t.id_usuario_asignado = u.id_usuario
+                 JOIN departamentos d ON u.id_departamento = d.id_departamento
+                 WHERE t.id_estatus = 3
+                 AND MONTH(t.fecha_finalizacion) = ?
+                 AND YEAR(t.fecha_finalizacion) = ?";
+        
+        $params = [$filtros['mes'], $filtros['ano']];
+        $types = 'ii';
+        
+        if ($filtros['usuario']) {
+            $query .= " AND t.id_usuario_asignado = ?";
+            $params[] = $filtros['usuario'];
+            $types .= 'i';
+        }
+        
+        if ($filtros['departamento']) {
+            $query .= " AND d.id_departamento = ?";
+            $params[] = $filtros['departamento'];
+            $types .= 'i';
+        }
+        
+        $query .= " ORDER BY t.fecha_finalizacion DESC";
+        
+        $stmt = $this->conexion->prepare($query);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    // Obtener tareas pendientes
+    public function obtenerTareasPendientes($filtros) {
+        $query = "SELECT t.*, u.nombre as asignado, d.nombre as departamento 
+                 FROM tareas t
+                 JOIN usuarios u ON t.id_usuario_asignado = u.id_usuario
+                 JOIN departamentos d ON u.id_departamento = d.id_departamento
+                 WHERE t.id_estatus = 1
+                 AND MONTH(t.fecha_creacion) = ?
+                 AND YEAR(t.fecha_creacion) = ?";
+        
+        $params = [$filtros['mes'], $filtros['ano']];
+        $types = 'ii';
+        
+        if ($filtros['usuario']) {
+            $query .= " AND t.id_usuario_asignado = ?";
+            $params[] = $filtros['usuario'];
+            $types .= 'i';
+        }
+        
+        if ($filtros['departamento']) {
+            $query .= " AND d.id_departamento = ?";
+            $params[] = $filtros['departamento'];
+            $types .= 'i';
+        }
+        
+        $query .= " ORDER BY t.fecha_creacion DESC";
+        
+        $stmt = $this->conexion->prepare($query);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    // Obtener resumen por departamento
+    public function obtenerResumenDepartamentos($filtros) {
+        $query = "SELECT d.nombre as departamento, 
+                         COUNT(CASE WHEN t.id_estatus = 3 THEN 1 END) as culminadas,
+                         COUNT(CASE WHEN t.id_estatus = 1 THEN 1 END) as pendientes
+                  FROM tareas t
+                  JOIN usuarios u ON t.id_usuario_asignado = u.id_usuario
+                  JOIN departamentos d ON u.id_departamento = d.id_departamento
+                  WHERE MONTH(t.fecha_creacion) = ? AND YEAR(t.fecha_creacion) = ?";
+        
+        $params = [$filtros['mes'], $filtros['ano']];
+        
+        if ($filtros['departamento']) {
+            $query .= " AND d.id_departamento = ?";
+            $params[] = $filtros['departamento'];
+        }
+        
+        $query .= " GROUP BY d.nombre ORDER BY culminadas DESC";
+        
+        $stmt = $this->conexion->prepare($query);
+        $stmt->bind_param(str_repeat('i', count($params)), ...$params);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    // Obtener datos para gráfica mensual
+    public function obtenerDatosGraficaMensual($ano) {
+        $query = "SELECT 
+                    MONTH(fecha_finalizacion) as mes,
+                    COUNT(*) as completadas
+                  FROM tareas
+                  WHERE id_estatus = 3
+                  AND YEAR(fecha_finalizacion) = ?
+                  GROUP BY MONTH(fecha_finalizacion)
+                  ORDER BY mes";
+        
+        $stmt = $this->conexion->prepare($query);
+        $stmt->bind_param('i', $ano);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    // Obtener datos para filtros
+    public function obtenerUsuarios() {
+        $result = $this->conexion->query("SELECT id_usuario, nombre FROM usuarios ORDER BY nombre");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    public function obtenerDepartamentos() {
+        $result = $this->conexion->query("SELECT id_departamento, nombre FROM departamentos ORDER BY nombre");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+}
 
-// Filtros
-$filtros = [
-    'mes' => $_GET['mes'] ?? date('m'),
-    'ano' => $_GET['ano'] ?? date('Y'),
-    'usuario' => $es_admin ? ($_GET['usuario'] ?? null) : $usuario['id']
+// Inicializar reporte
+$reporte = new ReporteTareas($conexion);
+$filtros = $reporte->obtenerFiltros($es_admin, $usuario_actual);
+$usuarios = $reporte->obtenerUsuarios();
+$departamentos = $reporte->obtenerDepartamentos();
+
+// Obtener datos
+$tareas_culminadas = $reporte->obtenerTareasCulminadas($filtros);
+$tareas_pendientes = $reporte->obtenerTareasPendientes($filtros);
+$resumen_departamentos = $reporte->obtenerResumenDepartamentos($filtros);
+$datos_grafica_mensual = $reporte->obtenerDatosGraficaMensual($filtros['ano']);
+
+if (isset($_GET['exportar']) && $_GET['exportar'] == 'excel') {
+    // 1. Crear nuevo documento
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    
+    // 2. Obtener campos adicionales (código original)
+    $campos_adicionales = [];
+    $result_campos = $conexion->query("SELECT DISTINCT nombre FROM campos_adicionales ORDER BY nombre");
+    if ($result_campos) {
+        $campos_adicionales = $result_campos->fetch_all(MYSQLI_ASSOC);
+    }
+
+    // 3. Consulta para tareas culminadas (código original)
+    $query = "SELECT 
+                t.id_tarea, 
+                t.titulo, 
+                t.categoria, 
+                t.descripcion, 
+                t.herramientas,
+                (SELECT GROUP_CONCAT(titulo SEPARATOR ' | ') 
+                 FROM tareas WHERE id_tarea_padre = t.id_tarea) as subtareas
+              FROM tareas t
+              WHERE t.id_estatus = 3
+              AND MONTH(t.fecha_finalizacion) = ?
+              AND YEAR(t.fecha_finalizacion) = ?";
+    
+    $stmt = $conexion->prepare($query);
+    $stmt->bind_param('ii', $filtros['mes'], $filtros['ano']);
+    $stmt->execute();
+    $tareas = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    // 4. Configurar encabezados
+    $columnas = [
+        'A' => 'Título',
+        'B' => 'Subtareas', 
+        'C' => 'Categoría',
+        'D' => 'Descripción',
+        'E' => 'Herramientas'
+    ];
+    
+    $columna_actual = 'F';
+    foreach ($campos_adicionales as $campo) {
+        $columnas[$columna_actual] = $campo['nombre'];
+        $columna_actual++;
+    }
+    
+    foreach ($columnas as $col => $titulo) {
+        $sheet->setCellValue($col.'1', $titulo);
+    }
+
+    // 5. Llenar datos
+    $fila = 2;
+    foreach ($tareas as $tarea) {
+        $sheet->setCellValue('A'.$fila, $tarea['titulo']);
+        $sheet->setCellValue('B'.$fila, $tarea['subtareas'] ?? '');
+        $sheet->setCellValue('C'.$fila, $tarea['categoria']);
+        $sheet->setCellValue('D'.$fila, $tarea['descripcion']);
+        $sheet->setCellValue('E'.$fila, $tarea['herramientas']);
+        
+        // Obtener campos adicionales
+        $res_campos = $conexion->prepare("SELECT nombre, valor FROM campos_adicionales WHERE id_tarea = ?");
+        $res_campos->bind_param('i', $tarea['id_tarea']);
+        $res_campos->execute();
+        $resultado = $res_campos->get_result();
+        $valores_campos = [];
+        while ($campo = $resultado->fetch_assoc()) {
+            $valores_campos[$campo['nombre']] = $campo['valor'];
+        }
+        
+        // Llenar campos adicionales
+        $columna_actual = 'F';
+        foreach ($campos_adicionales as $campo) {
+            $sheet->setCellValue($columna_actual.$fila, $valores_campos[$campo['nombre']] ?? '');
+            $columna_actual++;
+        }
+        
+        $fila++;
+    }
+
+    // 6. Configurar respuesta para descarga
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="reporte_tareas_'.date('Y-m-d').'.xlsx"');
+    header('Cache-Control: max-age=0');
+    
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
+    exit;
+}
+
+$datosGrafica = [
+    'departamentos' => array_column($resumen_departamentos, 'departamento'),
+    'culminadas' => array_column($resumen_departamentos, 'culminadas'),
+    'pendientes' => array_column($resumen_departamentos, 'pendientes'),
+    'mensual' => $datos_grafica_mensual
 ];
-
-// Consulta para tareas culminadas
-$query = "SELECT 
-            t.id_tarea,
-            t.titulo,
-            t.descripcion,
-            t.fecha_creacion,
-            t.fecha_finalizacion,
-            ua.nombre as asignado,
-            d.nombre as departamento
-          FROM tareas t
-          JOIN usuarios ua ON t.id_usuario_asignado = ua.id_usuario
-          JOIN departamentos d ON ua.id_departamento = d.id_departamento
-          WHERE t.id_estatus = 3
-          AND MONTH(t.fecha_finalizacion) = ? 
-          AND YEAR(t.fecha_finalizacion) = ?";
-
-$params = [$filtros['mes'], $filtros['ano']];
-$types = 'ii';
-
-// Aplicar filtro de usuario si es necesario
-if ($filtros['usuario']) {
-    $query .= " AND t.id_usuario_asignado = ?";
-    $params[] = $filtros['usuario'];
-    $types .= 'i';
-}
-
-$query .= " ORDER BY t.fecha_finalizacion DESC";
-
-// Obtener tareas culminadas
-$tareas_culminadas = [];
-$stmt = $conexion->prepare($query);
-
-if ($stmt === false) {
-    die("Error al preparar la consulta: " . $conexion->error);
-}
-
-if ($stmt->bind_param($types, ...$params) === false) {
-    die("Error al vincular parámetros: " . $stmt->error);
-}
-
-if ($stmt->execute() === false) {
-    die("Error al ejecutar la consulta: " . $stmt->error);
-}
-
-$result = $stmt->get_result();
-if ($result) {
-    $tareas_culminadas = $result->fetch_all(MYSQLI_ASSOC);
-}
-
-// Consulta para estadísticas (gráfica)
-$query_estadisticas = "SELECT 
-                        SUM(CASE WHEN id_estatus = 3 THEN 1 ELSE 0 END) as culminadas,
-                        SUM(CASE WHEN id_estatus = 2 THEN 1 ELSE 0 END) as en_progreso,
-                        SUM(CASE WHEN id_estatus = 1 THEN 1 ELSE 0 END) as pendientes
-                      FROM tareas
-                      WHERE MONTH(fecha_creacion) = ? 
-                      AND YEAR(fecha_creacion) = ?";
-
-if ($filtros['usuario']) {
-    $query_estadisticas .= " AND id_usuario_asignado = ?";
-}
-
-$stmt_estadisticas = $conexion->prepare($query_estadisticas);
-if ($stmt_estadisticas) {
-    $stmt_estadisticas->bind_param($types, ...$params);
-    $stmt_estadisticas->execute();
-    $estadisticas = $stmt_estadisticas->get_result()->fetch_assoc();
-}
 ?>
 
 <div class="container-fluid">
-    <h1 class="h3 mb-4 text-gray-800">Reporte Mensual de Tareas Culminadas</h1>
+    <h1 class="h3 mb-4 text-gray-800">Reporte Mensual de Tareas</h1>
     
-    <!-- Filtros -->
+    <!-- Filtros mejorados en línea -->
     <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
-        </div>
-        <div class="card-body">
-            <form method="get" class="form-inline">
-                <div class="form-group mr-3">
-                    <label class="mr-2">Mes:</label>
-                    <select name="mes" class="form-control">
-                        <?php for($i=1; $i<=12; $i++): ?>
-                            <option value="<?= $i ?>" <?= $filtros['mes'] == $i ? 'selected' : '' ?>>
-                                <?= DateTime::createFromFormat('!m', $i)->format('F') ?>
-                            </option>
-                        <?php endfor; ?>
-                    </select>
+        <div class="card-body p-4">
+            <form method="get" class="form">
+                <div class="row">
+                    <div class="col-md-2">
+                        <label>Mes</label>
+                        <select name="mes" class="form-control">
+                            <?php for($i=1; $i<=12; $i++): ?>
+                                <option value="<?= $i ?>" <?= $filtros['mes'] == $i ? 'selected' : '' ?>>
+                                    <?= DateTime::createFromFormat('!m', $i)->format('M') ?>
+                                </option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Año</label>
+                        <select name="ano" class="form-control">
+                            <?php for($i=date('Y'); $i>=2020; $i--): ?>
+                                <option value="<?= $i ?>" <?= $filtros['ano'] == $i ? 'selected' : '' ?>><?= $i ?></option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
+                    <?php if($es_admin): ?>
+                    <div class="col-md-3">
+                        <label>Usuario</label>
+                        <select name="usuario" class="form-control">
+                            <option value="">Todos los usuarios</option>
+                            <?php foreach($usuarios as $u): ?>
+                                <option value="<?= $u['id_usuario'] ?>" <?= $filtros['usuario'] == $u['id_usuario'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($u['nombre']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+                    <div class="col-md-3">
+                        <label>Departamento</label>
+                        <select name="departamento" class="form-control">
+                            <option value="">Todos los departamentos</option>
+                            <?php foreach($departamentos as $d): ?>
+                                <option value="<?= $d['id_departamento'] ?>" <?= $filtros['departamento'] == $d['id_departamento'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($d['nombre']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-1">
+                            Filtrar
+                        </button>
+                        <a href="reportes.php" class="btn btn-secondary">
+                            Limpiar
+                        </a>
+                    </div>
                 </div>
-                <div class="form-group mr-3">
-                    <label class="mr-2">Año:</label>
-                    <select name="ano" class="form-control">
-                        <?php for($i=date('Y'); $i>=2020; $i--): ?>
-                            <option value="<?= $i ?>" <?= $filtros['ano'] == $i ? 'selected' : '' ?>><?= $i ?></option>
-                        <?php endfor; ?>
-                    </select>
-                </div>
-                <?php if($es_admin): ?>
-                <div class="form-group mr-3">
-                    <label class="mr-2">Usuario:</label>
-                    <select name="usuario" class="form-control">
-                        <option value="">Todos</option>
-                        <?php 
-                        $usuarios = $conexion->query("SELECT id_usuario, nombre FROM usuarios ORDER BY nombre");
-                        while($u = $usuarios->fetch_assoc()): ?>
-                            <option value="<?= $u['id_usuario'] ?>" <?= $filtros['usuario'] == $u['id_usuario'] ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($u['nombre']) ?>
-                            </option>
-                        <?php endwhile; ?>
-                    </select>
-                </div>
-                <?php endif; ?>
-                <button type="submit" class="btn btn-primary mr-2">
-                    <i class="fas fa-filter"></i> Aplicar Filtros
-                </button>
-                <a href="reportes.php" class="btn btn-secondary">
-                    <i class="fas fa-sync-alt"></i> Limpiar
-                </a>
             </form>
         </div>
     </div>
 
-    <!-- Gráfica de Alcance -->
+    <!-- Gráficos -->
     <div class="row mb-4">
-        <div class="col-md-12">
+        <!-- Gráfico de desempeño por departamento -->
+        <div class="col-md-6">
             <div class="card shadow">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Alcance de Tareas en el Mes</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Desempeño por Departamento</h6>
                 </div>
                 <div class="card-body">
-                    <div class="chart-pie pt-4">
-                        <canvas id="alcanceChart"></canvas>
+                    <div class="chart-bar pt-4">
+                        <canvas id="departamentosChart"></canvas>
                     </div>
-                    <div class="mt-4 text-center small">
-                        <span class="mr-3">
-                            <i class="fas fa-circle text-success"></i> Culminadas: <?= $estadisticas['culminadas'] ?? 0 ?>
-                        </span>
-                        <span class="mr-3">
-                            <i class="fas fa-circle text-info"></i> En Progreso: <?= $estadisticas['en_progreso'] ?? 0 ?>
-                        </span>
-                        <span class="mr-3">
-                            <i class="fas fa-circle text-warning"></i> Pendientes: <?= $estadisticas['pendientes'] ?? 0 ?>
-                        </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gráfico de tareas completadas por mes -->
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Tareas Completadas en <?= $filtros['ano'] ?></h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar pt-4">
+                        <canvas id="mensualChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Listado de Tareas Culminadas -->
+    <!-- Tareas culminadas con opción de exportar -->
     <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <h6 class="m-0 font-weight-bold text-primary">Tareas Culminadas (<?= count($tareas_culminadas) ?>)</h6>
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">
+                Tareas Culminadas (<?= count($tareas_culminadas) ?>)
+                <small class="text-muted ml-2">
+                <?= date('F Y', mktime(0, 0, 0, $filtros['mes'], 1, $filtros['ano'])) ?>
+                </small>
+            </h6>
             <div>
-                <a href="?<?= http_build_query(array_merge($_GET, ['exportar' => 1])) ?>" class="btn btn-sm btn-success">
-                    <i class="fas fa-file-excel"></i> Exportar
+                <a href="reportes.php?<?= http_build_query(array_merge($_GET, ['exportar' => 'excel'])) ?>" 
+                   class="btn btn-success btn-sm mr-2">
+                    <i class="fas fa-file-excel"></i> Exportar Excel
                 </a>
             </div>
         </div>
-        <div class="card-body">
-            <?php if(!empty($tareas_culminadas)): ?>
-                <div class="table-responsive">
-                    <table class="table table-bordered" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>Título</th>
-                                <th>Descripción</th>
-                                <th>Asignado a</th>
-                                <th>Departamento</th>
-                                <th>Fecha Creación</th>
-                                <th>Fecha Finalización</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach($tareas_culminadas as $tarea): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($tarea['titulo']) ?></td>
-                                <td><?= htmlspecialchars(substr($tarea['descripcion'], 0, 50)) . (strlen($tarea['descripcion']) > 50 ? '...' : '') ?></td>
-                                <td><?= htmlspecialchars($tarea['asignado']) ?></td>
-                                <td><?= htmlspecialchars($tarea['departamento']) ?></td>
-                                <td><?= date('d/m/Y', strtotime($tarea['fecha_creacion'])) ?></td>
-                                <td><?= date('d/m/Y', strtotime($tarea['fecha_finalizacion'])) ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php else: ?>
-                <div class="alert alert-info">No hay tareas culminadas para el periodo seleccionado.</div>
-            <?php endif; ?>
+        <div class="collapse show" id="detalleCulminadas">
+            <div class="card-body">
+                <?php if(!empty($tareas_culminadas)): ?>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Título</th>
+                                    <th>Asignado</th>
+                                    <th>Departamento</th>
+                                    <th>Creación</th>
+                                    <th>Finalización</th>
+                                    <th>Duración</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach($tareas_culminadas as $tarea): 
+                                    $dias = (strtotime($tarea['fecha_finalizacion']) - strtotime($tarea['fecha_creacion'])) / (60 * 60 * 24);
+                                ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($tarea['titulo']) ?></td>
+                                    <td><?= htmlspecialchars($tarea['asignado']) ?></td>
+                                    <td><?= htmlspecialchars($tarea['departamento']) ?></td>
+                                    <td><?= date('d/m/y', strtotime($tarea['fecha_creacion'])) ?></td>
+                                    <td><?= date('d/m/y', strtotime($tarea['fecha_finalizacion'])) ?></td>
+                                    <td><?= round($dias) ?> días</td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php else: ?>
+                    <div class="alert alert-info">No hay tareas culminadas para este periodo.</div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tareas pendientes -->
+    <div class="card shadow">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-warning">
+                Tareas Pendientes (<?= count($tareas_pendientes) ?>)
+                <small class="text-muted ml-2">
+                <?= date('F Y', mktime(0, 0, 0, $filtros['mes'], 1, $filtros['ano'])) ?>
+                </small>
+            </h6>
+            <div>
+                <button class="btn btn-sm btn-warning" data-toggle="collapse" data-target="#detallePendientes">
+                    <i class="fas fa-chevron-down"></i> Ver/Ocultar
+                </button>
+            </div>
+        </div>
+        <div class="collapse" id="detallePendientes">
+            <div class="card-body">
+                <?php if(!empty($tareas_pendientes)): ?>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Título</th>
+                                    <th>Asignado</th>
+                                    <th>Departamento</th>
+                                    <th>Creación</th>
+                                    <th>Días pendiente</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach($tareas_pendientes as $tarea): 
+                                    $dias = (time() - strtotime($tarea['fecha_creacion'])) / (60 * 60 * 24);
+                                ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($tarea['titulo']) ?></td>
+                                    <td><?= htmlspecialchars($tarea['asignado']) ?></td>
+                                    <td><?= htmlspecialchars($tarea['departamento']) ?></td>
+                                    <td><?= date('d/m/y', strtotime($tarea['fecha_creacion'])) ?></td>
+                                    <td class="<?= $dias > 30 ? 'text-danger font-weight-bold' : '' ?>">
+                                        <?= round($dias) ?> días
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php else: ?>
+                    <div class="alert alert-success">¡No hay tareas pendientes para este periodo!</div>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>
@@ -217,40 +467,69 @@ if ($stmt_estadisticas) {
 <!-- Script para gráficos -->
 <script src="vendor/chart.js/Chart.min.js"></script>
 <script>
-// Gráfica de Alcance
-document.addEventListener('DOMContentLoaded', function() {
-    var ctx = document.getElementById('alcanceChart');
-    var myChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: ['Culminadas', 'En Progreso', 'Pendientes'],
-            datasets: [{
-                data: [
-                    <?= $estadisticas['culminadas'] ?? 0 ?>,
-                    <?= $estadisticas['en_progreso'] ?? 0 ?>,
-                    <?= $estadisticas['pendientes'] ?? 0 ?>
-                ],
-                backgroundColor: [
-                    'rgba(40, 167, 69, 0.8)',
-                    'rgba(23, 162, 184, 0.8)',
-                    'rgba(255, 193, 7, 0.8)'
-                ],
-                borderColor: [
-                    'rgba(40, 167, 69, 1)',
-                    'rgba(23, 162, 184, 1)',
-                    'rgba(255, 193, 7, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
+// Espera a que jQuery esté disponible
+function whenJQueryReady() {
+    if (window.jQuery) {
+        // Tu código que usa jQuery aquí
+        $(document).ready(function() {
+            // Inicialización de DataTables
+            $('.table-datatable').DataTable();
+        });
+    } else {
+        setTimeout(whenJQueryReady, 100);
+    }
+}
+whenJQueryReady();
+
+$(document).ready(function() {
+    // Verifica que los elementos del gráfico existan
+    const ctxDepartamentos = document.getElementById('departamentosChart')?.addEventListener(...)
+    const ctxMensual = document.getElementById('mensualChart');
+    
+    if (!ctxDepartamentos || !ctxMensual) {
+        console.error("No se encontraron los elementos del gráfico");
+        return;
+    }
+
+    // Datos desde PHP (usa json_encode para seguridad)
+    const datosDepartamentos = {
+        labels: <?= json_encode(array_column($resumen_departamentos, 'departamento')) ?>,
+        datasets: [
+            {
+                label: 'Tareas Culminadas',
+                data: <?= json_encode(array_column($resumen_departamentos, 'culminadas')) ?>,
+                backgroundColor: 'rgba(40, 167, 69, 0.7)'
+            },
+            {
+                label: 'Tareas Pendientes',
+                data: <?= json_encode(array_column($resumen_departamentos, 'pendientes')) ?>,
+                backgroundColor: 'rgba(255, 193, 7, 0.7)'
+            }
+        ]
+    };
+
+    // Gráfico de Departamentos
+    new Chart(ctxDepartamentos, {
+        type: 'bar',
+        data: datosDepartamentos,
         options: {
             responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                }
-            }
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Gráfico Mensual (datos de ejemplo)
+    const datosMensuales = <?= json_encode($datos_grafica_mensual) ?>;
+    
+    new Chart(ctxMensual, {
+        type: 'line',
+        data: {
+            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+            datasets: [{
+                label: 'Tareas Completadas',
+                data: datosMensuales,
+                borderColor: 'rgba(54, 162, 235, 1)'
+            }]
         }
     });
 });

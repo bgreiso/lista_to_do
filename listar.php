@@ -96,12 +96,12 @@ if ($query_roles) {
                                             data-usuario="<?= htmlspecialchars($usuario['usuario']) ?>"
                                             data-departamento="<?= $usuario['id_departamento'] ?>"
                                             data-rol="<?= $usuario['id_rol'] ?>">
-                                            <i class="bi bi-pencil"></i> Editar
+                                            <i class="bi bi-person-fill-gear"></i> Editar
                                         </button>
                                         <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#eliminarUsuarioModal" 
                                             data-id="<?= $usuario['id_usuario'] ?>"
                                             data-nombre="<?= htmlspecialchars($usuario['nombre']) ?>">
-                                            <i class="bi bi-trash"></i> Eliminar
+                                            <i class="bi bi-person-fill-slash"></i> Eliminar
                                         </button>
                                     </div>
                                 </td>

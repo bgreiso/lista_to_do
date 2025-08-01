@@ -1,5 +1,6 @@
 <?php
 require_once 'config.php';
+require_once 'auth.php';
 include 'header.php';
 
 // Procesar acciones de tareas
@@ -77,6 +78,8 @@ $result = $stmt->get_result();
 if ($result) {
     $tareas = $result->fetch_all(MYSQLI_ASSOC);
 }
+
+
 ?>
 
 <div class="container-fluid">
@@ -98,6 +101,7 @@ if ($result) {
                     <?php endwhile; ?>
                 </select>
             </div>
+            <?php if(esAdmin()): ?>
             <div class="col-md-3">
                 <label>Departamento</label>
                 <select name="departamento" class="form-control">
@@ -111,6 +115,7 @@ if ($result) {
                     <?php endwhile; ?>
                 </select>
             </div>
+            <?php endif; ?>
             <div class="col-md-2">
                 <label>Mes</label>
                 <select name="mes" class="form-control">
@@ -181,7 +186,7 @@ if ($result) {
                                             data-bs-target="#editarTareaModal"
                                             data-id="<?= $tarea['id_tarea'] ?>"
                                             onclick="cargarDatosTarea(<?= $tarea['id_tarea'] ?>)">
-                                        <i class="bi bi-pencil-fill"></i>
+                                        <i class="bi bi-pencil-square"></i>
                                     </button>
                                     
                                     <!-- Botón Eliminar -->
@@ -191,13 +196,13 @@ if ($result) {
                                             data-bs-target="#eliminarTareaModal"
                                             data-id="<?= $tarea['id_tarea'] ?>" 
                                             data-titulo="<?= htmlspecialchars($tarea['titulo']) ?>">
-                                        <i class="bi bi-trash-fill"></i>
+                                        <i class="bi bi-trash3"></i>
                                     </button>
                                     
                                     <!-- Botón Ver Detalles -->
                                     <a href="ver.php?id=<?= $tarea['id_tarea'] ?>" 
                                        class="btn btn-success btn-sm">
-                                        <i class="bi bi-eye-fill"></i>
+                                        <i class="bi bi-eye"></i>
                                     </a>
                                 </div>
                             </td>

@@ -149,6 +149,7 @@ $usuarios_por_depto = $conexion->query("
     </div>
 
     <!-- Tabla de usuarios recientes -->
+    <?php if (esAdmin()): ?>
     <div class="row">
         <div class="col-12">
             <div class="card shadow mb-4">
@@ -199,7 +200,7 @@ $usuarios_por_depto = $conexion->query("
             </div>
         </div>
     </div>
-
+    <?php endif; ?>                               
 </div>
 
 <!-- Script para gráficos -->
