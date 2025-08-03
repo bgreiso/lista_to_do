@@ -1,6 +1,5 @@
 <?php
 require_once 'config.php';
-require_once 'auth.php';
 include 'header.php';
 
 // Procesar acciones de tareas
@@ -78,8 +77,6 @@ $result = $stmt->get_result();
 if ($result) {
     $tareas = $result->fetch_all(MYSQLI_ASSOC);
 }
-
-
 ?>
 
 <div class="container-fluid">
@@ -101,7 +98,6 @@ if ($result) {
                     <?php endwhile; ?>
                 </select>
             </div>
-            <?php if(esAdmin()): ?>
             <div class="col-md-3">
                 <label>Departamento</label>
                 <select name="departamento" class="form-control">
@@ -115,7 +111,6 @@ if ($result) {
                     <?php endwhile; ?>
                 </select>
             </div>
-            <?php endif; ?>
             <div class="col-md-2">
                 <label>Mes</label>
                 <select name="mes" class="form-control">

@@ -30,28 +30,5 @@
     
     <!-- Scripts personalizados -->
     <script src="admin.js"></script>
-    
-    <script>
-    // Toggle del sidebar
-    document.getElementById('sidebarToggle').addEventListener('click', function() {
-        document.body.classList.toggle('sidebar-toggled');
-        document.querySelector('.sidebar').classList.toggle('toggled');
-        
-        if (document.querySelector('.sidebar').classList.contains('toggled')) {
-            document.querySelector('.sidebar .collapse').classList.remove('show');
-        }
-    });
-    
-    // Cerrar el sidebar cuando se hace clic fuera en móviles
-    window.addEventListener('DOMContentLoaded', function() {
-        document.querySelector('body').addEventListener('click', function(e) {
-            if (window.innerWidth < 768) {
-                if (e.target.closest('.sidebar') === null && !e.target.closest('#sidebarToggle')) {
-                    document.querySelector('.sidebar').classList.add('toggled');
-                }
-            }
-        });
-    });
-    </script>
 </body>
 </html>

@@ -1,77 +1,116 @@
-<div class="sidebar bg-primary text-white">
-    <div class="sidebar-brand d-flex align-items-center justify-content-center p-4">
-        <div class="sidebar-brand-icon">
-            <h4><i class="bi bi-ui-checks-grid"></i></h4>
+<div class="sidebar">
+    <div class="sidebar-top-wrapper">
+        <div class="sidebar-top">
+            <a href="#" class="logo__wrapper">
+                <i class="bi bi-ui-checks-grid fs-4"></i>
+                <span class="hide company-name">Panel de Control</span>
+            </a>
         </div>
-        <div class="sidebar-brand-text mx-3">Panel de Control</div>
+        <button class="expand-btn" type="button">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-labelledby="exp-btn" role="img">
+                <title id="exp-btn">Expandir/Contraer Menú</title>
+                <path d="M6.00979 2.72L10.3565 7.06667C10.8698 7.58 10.8698 8.42 10.3565 8.93333L6.00979 13.28"
+                    stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+        </button>
     </div>
-    
-    <hr class="sidebar-divider my-0">
-    
-    <div class="nav-items-container">
-        <div class="sidebar-heading p-3">
-            Navegación Principal
-        </div>
-        
-        <ul class="navbar-nav">
-            <li class="nav-item">
-                <a class="nav-link" href="panel_control.php">
-                    <i class="bi bi-diagram-3-fill"></i>
-                    <span>Dashboard</span>
+
+    <div class="sidebar-links">
+        <ul>
+            <li>
+                <a href="panel_control.php" title="Dashboard" class="tooltip <?= basename($_SERVER['PHP_SELF']) == 'panel_control.php' ? 'active' : '' ?>">
+                    <i class="bi bi-diagram-3-fill fs-5"></i>
+                    <span class="link hide">Dashboard</span>
+                    <span class="tooltip__content">Dashboard</span>
                 </a>
             </li>
             
-            <hr class="sidebar-divider">
+            <li class="separator-container">
+                <div class="separator"></div>
+            </li>
             
-            <div class="sidebar-heading p-3">
+            <li class="sidebar-heading hide">
                 Gestión
-            </div>
+            </li>
             
             <?php if (esAdmin()): ?>
-            <li class="nav-item">
-                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseUsuarios" aria-expanded="false">
-                        <i class="bi bi-person-badge-fill"></i>
-                        <span>Usuarios</span>
-                    </a>
-                <div id="collapseUsuarios" class="collapse" data-bs-parent=".nav-items-container">
-                    <div class="bg-dark bg-gradient py-2">
-                        <a href="listar.php" class="nav-link text-white">
-                            <i class="bi bi-person-lines-fill"></i> Listado
+            <li>
+                <a href="#collapseUsuarios" title="Usuarios" class="tooltip" data-bs-toggle="collapse">
+                    <i class="bi bi-person-badge-fill fs-5"></i>
+                    <span class="link hide">Usuarios</span>
+                    <span class="tooltip__content">Usuarios</span>
+                </a>
+                <div id="collapseUsuarios" class="collapse">
+                    <div class="submenu">
+                        <a href="listar.php" class="<?= basename($_SERVER['PHP_SELF']) == 'listar.php' ? 'active' : '' ?>">
+                            <h5><i class="bi bi-person-lines-fill"></i></h5>
+                            <span class="link hide">Listado</span>
                         </a>
-                        <a href="crear.php" class="nav-link text-white">
-                            <i class="bi bi-person-plus"></i> Crear
+                        <a href="crear.php" class="<?= basename($_SERVER['PHP_SELF']) == 'crear.php' ? 'active' : '' ?>">
+                            <h5><i class="bi bi-person-plus"></i></h5>
+                            <span class="link hide">Crear</span>
                         </a>
                     </div>
                 </div>
             </li>
             <?php endif; ?>
             
-            <li class="nav-item">
-                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseTareas" aria-expanded="false">
-                    <i class="bi bi-ui-checks"></i>
-                    <span>Tareas</span>
+            <li>
+                <a href="#collapseTareas" title="Tareas" class="tooltip" data-bs-toggle="collapse">
+                    <i class="bi bi-ui-checks fs-5"></i>
+                    <span class="link hide">Tareas</span>
+                    <span class="tooltip__content">Tareas</span>
                 </a>
-                <div id="collapseTareas" class="collapse" data-bs-parent=".nav-items-container">
-                    <div class="bg-dark bg-gradient py-2">
-                        <a href="tablero.php" class="nav-link text-white">
-                            <i class="bi bi-grid-3x2-gap"></i> Tablero
+                <div id="collapseTareas" class="collapse">
+                    <div class="submenu">
+                        <a href="tablero.php" class="<?= basename($_SERVER['PHP_SELF']) == 'tablero.php' ? 'active' : '' ?>">
+                            <h5><i class="bi bi-grid-3x2-gap"></i></h5> 
+                            <span class="link hide">Tablero</span>
                         </a>
-                        <a href="todas.php" class="nav-link text-white">
-                            <i class="bi bi-list-ul"></i> Lista
+                        <a href="todas.php" class="<?= basename($_SERVER['PHP_SELF']) == 'todas.php' ? 'active' : '' ?>">
+                            <h5><i class="bi bi-list-ul"></i></h5> 
+                            <span class="link hide">Lista</span>
                         </a>
-                        <a href="agregar_tarea.php" class="nav-link text-white">
-                            <i class="bi bi-file-earmark-plus"></i> Crear Tarea
+                        <a href="agregar_tarea.php" class="<?= basename($_SERVER['PHP_SELF']) == 'agregar_tarea.php' ? 'active' : '' ?>">
+                            <h5><i class="bi bi-file-earmark-plus"></i></h5>
+                            <span class="link hide">Crear Tarea</span>
                         </a>
                     </div>
                 </div>
             </li>
 
-            <li class="nav-item">
-                <a class="nav-link" href="reportes.php">
-                    <i class="bi bi-clipboard-data"></i>
-                    Reportes
+            <li>
+                <a href="reportes.php" title="Reportes" class="tooltip <?= basename($_SERVER['PHP_SELF']) == 'reportes.php' ? 'active' : '' ?>">
+                    <i class="bi bi-clipboard-data fs-5"></i>
+                    <span class="link hide">Reportes</span>
+                    <span class="tooltip__content">Reportes</span>
                 </a>
             </li>
         </ul>
+    </div>
+    
+    <div class="separator separator--top"></div>
+    
+    <div class="sidebar__profile">
+        <div class="avatar__wrapper">
+            <img class="avatar" src="icon_profile.webp" alt="Foto de perfil" style="width:40px;height:40px;object-fit:cover">
+        </div>
+        <div class="avatar__name hide">
+            <div class="user-name">
+                <?php
+                $nombreUsuario = 'Invitado';
+                if (isset($_SESSION['usuario'])) {
+                    $nombreUsuario = htmlspecialchars($_SESSION['usuario']);
+                } elseif (isset($_SESSION['id_usuario'])) {
+                    $nombreUsuario = 'Usuario ' . (int)$_SESSION['id_usuario'];
+                }
+                echo $nombreUsuario;
+                ?>
+            </div>
+            <div class="email"><?= esAdmin() ? 'Administrador' : 'Usuario' ?></div>
+        </div>
+        <a href="cerrar_sesion.php" class="logout hide" title="Cerrar sesión">
+            <i class="bi bi-box-arrow-right fs-5"></i>
+        </a>
     </div>
 </div>
